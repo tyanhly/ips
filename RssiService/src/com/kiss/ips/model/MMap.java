@@ -13,6 +13,7 @@ import com.kiss.ips.entity.EMap;
 import com.kiss.ips.entity.Position;
 import com.kiss.ips.entity.Wifi;
 import com.kiss.ips.entity.Ibeacon;
+import com.kiss.math.KMath;
 import com.kiss.math.SLineEquation;
 
 public class MMap {
@@ -92,7 +93,9 @@ public class MMap {
             float b = 2*(y2-y1);
             float c = x1*x1 + y1*y1 - (x2*x2 - y2*y2) - R1*R1 + R2*R2;
             try {
-                SLineEquation line = new SLineEquation(a, b, c);
+                SLineEquation sl = new SLineEquation(a, b, c);
+                KMath.F1Result result = KMath.solveF1(en1.getValue().exportToCircleEquation(), sl);
+                return result.getCentral();
             } catch (Exception e) {
                 Log.d("TungLog", "Wifi data error");
                 return en1.getValue().getPos();

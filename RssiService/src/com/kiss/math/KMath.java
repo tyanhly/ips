@@ -47,6 +47,10 @@ public class KMath {
 
         public F1Result() {
         }
+        
+        public Position getCentral(){
+            return new Position((int) (p1.x + p2.x)/2, (int) (p1.y + p2.y)/2);
+        }
     }
 
 }
