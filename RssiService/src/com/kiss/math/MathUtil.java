@@ -11,28 +11,26 @@ public class MathUtil {
          * 
          */
         MathUtil.F1Result f1Result = new MathUtil.F1Result();
-        float x0 = ce.getX0();
-        float y0 = ce.getY0();
-        float R = ce.getR();
-        float a = sl.getA();
-        float b = sl.getB();
-        float c = sl.getC();
+        double x0 = ce.getX0();
+        double y0 = ce.getY0();
+        double R = ce.getR();
+        double a = sl.getA();
+        double b = sl.getB();
+        double c = sl.getC();
 
         if (a == 0) {
-            float y = -c / b;
-            QuadraticEquation qe = new QuadraticEquation(1, (float) (-2 * x0),
-                    (float) (x0 * x0 + c * c / (b * b) - R * R));
-            float xv1 = qe.getV1();
-            float xv2 = qe.getV2();
-            f1Result.p1.x = (int) xv1;
-            f1Result.p2.x = (int) xv2;
-            f1Result.p1.y = (int) y;
-            f1Result.p2.y = (int) y;
+            double y = -c / b;
+            QuadraticEquation qe = new QuadraticEquation(1, (double) (-2 * x0),
+                    (double) (x0 * x0 + c * c / (b * b) - R * R));
+            double xv1 = qe.getV1();
+            double xv2 = qe.getV2();
+            f1Result.p1 = new Position((int) xv1, (int) y);
+            f1Result.p2 = new Position((int) xv2, (int) y);
             return f1Result;
         }
-        float A = 1 + b * b / a / a;
-        float B = 2 * b * c / a / a + 2 * b * x0 / a - 2 * y0;
-        float C = c * c / a / a + 2 * c * x0 / a + x0 * x0 + y0 * y0 - R * R;
+        double A = 1 + b * b / a / a;
+        double B = 2 * b * c / a / a + 2 * b * x0 / a - 2 * y0;
+        double C = c * c / a / a + 2 * c * x0 / a + x0 * x0 + y0 * y0 - R * R;
         QuadraticEquation qe = new QuadraticEquation(A, B, C);
         f1Result.p1.y = (int) qe.getV1();
         f1Result.p2.y = (int) qe.getV2();
@@ -48,8 +46,11 @@ public class MathUtil {
         public F1Result() {
         }
         
-        public Position getCentral(){
-            return new Position((int) (p1.x + p2.x)/2, (int) (p1.y + p2.y)/2);
+        public Position getEstimateResult(){
+            long x = (p1.x + p2.x)/2;
+            long y = (p1.y + p2.y)/2;
+            
+            return new Position((x<0)?0:x, (y<0)?0:y);
         }
     }
 

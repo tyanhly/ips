@@ -4,12 +4,15 @@ import com.kiss.math.CircleEquation;
 
 public abstract class Wireless {
 
-    protected int rssi = 120;
-    protected int currentDistance;
+    protected long currentDistance;
     protected String mac;
-    protected int errorTerm;
     protected Position pos;
 
+    public Wireless(String mac, Position pos){
+        this.pos = pos;
+        this.mac = mac;
+    }
+    
     public Wireless(Position pos){
         this.pos = pos;
     }
@@ -17,30 +20,12 @@ public abstract class Wireless {
     public Wireless(int x, int y){
         this.pos = new Position(x, y);
     }
-    public int getRssi() {
-        
-        return rssi;
-    }
-
-    public void setRssi(int rssi) {
-        this.rssi = rssi;
-        estimateDistanceByRssi();
-    }
-
     public String getMac() {
-        return mac;
+        return mac.toLowerCase();
     }
 
     public void setMac(String mac) {
         this.mac = mac;
-    }
-
-    public int getErrorTerm() {
-        return errorTerm;
-    }
-
-    public void setErrorTerm(int errorTerm) {
-        this.errorTerm = errorTerm;
     }
 
     public Position getPos() {
@@ -51,16 +36,13 @@ public abstract class Wireless {
         this.pos = pos;
     }
 
-    public int getCurrentDistance() {
+    public long getCurrentDistance() {
         return currentDistance;
     }
 
-    public void setCurrentDistance(int currentDistance) {
+    public void setCurrentDistance(long currentDistance) {
         this.currentDistance = currentDistance;
     }
-
-    public abstract int estimateDistanceByRssi() ;
-    
     
     public CircleEquation exportToCircleEquation() throws Exception{
         CircleEquation ce = new CircleEquation((float) this.pos.x, (float) this.pos.y, (float) this.getCurrentDistance());

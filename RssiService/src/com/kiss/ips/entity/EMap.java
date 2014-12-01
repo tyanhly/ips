@@ -12,7 +12,7 @@ public class EMap {
     private Map<String, Wifi> wifis = new HashMap<String, Wifi>();;
     
     public TreeMap<String, Wifi> currentWifis = new TreeMap<String, Wifi>();
-    public TreeMap<String, Wifi> currentIbeacons= new TreeMap<String, Wifi>();
+    public TreeMap<String, Ibeacon> currentIbeacons= new TreeMap<String, Ibeacon>();
 
     public EMap() {
     }

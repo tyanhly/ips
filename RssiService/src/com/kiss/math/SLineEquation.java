@@ -8,11 +8,11 @@ public class SLineEquation {
     /**
      * ax + by + c = 0
      */
-    private float a;
-    private float b;
-    private float c;
+    private double a;
+    private double b;
+    private double c;
     
-    public SLineEquation(float a, float b, float c) throws Exception{
+    public SLineEquation(double a, double b, double c) throws Exception{
         if(a == 0 & b==0){
             throw new Exception("a=0 and b=0, it not a straight line");
         }
@@ -21,44 +21,44 @@ public class SLineEquation {
         this.c = c;
     }
     
-    public float getX(float y) throws Exception{
+    public double getX(double y) throws Exception{
         if(a==0){
             throw new Exception("a=0, x = anything");
         }
-        float x = -(c + b*y)/a;
+        double x = -(c + b*y)/a;
         return x;
     }
     
 
-    public float getY(float x) throws Exception{
+    public double getY(double x) throws Exception{
         if(b==0){
             throw new Exception("b=0, x = anything");
         }
-        float y = -(c + a*x)/b;
+        double y = -(c + a*x)/b;
         return y;
     }
 
-    public float getA() {
+    public double getA() {
         return a;
     }
 
-    public void setA(float a) {
+    public void setA(double a) {
         this.a = a;
     }
 
-    public float getB() {
+    public double getB() {
         return b;
     }
 
-    public void setB(float b) {
+    public void setB(double b) {
         this.b = b;
     }
 
-    public float getC() {
+    public double getC() {
         return c;
     }
 
-    public void setC(float c) {
+    public void setC(double c) {
         this.c = c;
     }
     

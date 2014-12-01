@@ -30,6 +30,19 @@
       android:listSelector="@android:color/darker_gray" >
 
    </ListView>
+        
+      
+   <ListView
+      android:id="@+id/listView2"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:layout_alignParentTop="true"
+      android:layout_centerHorizontal="true"
+      android:drawSelectorOnTop="false"
+      android:background="@android:color/background_dark"
+      android:listSelector="@android:color/darker_gray" >
+       
+   </ListView>
    
        
 </LinearLayout> 

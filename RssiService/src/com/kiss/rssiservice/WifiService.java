@@ -14,7 +14,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
-public abstract class WifiService extends Service {
+public class WifiService extends Service {
     private static String _TAG = "TungLyLog";
     private final IBinder _mBinder = new WifiBinder();
     private List<ScanResult> _wifis = new ArrayList<ScanResult>();
@@ -36,7 +36,7 @@ public abstract class WifiService extends Service {
     };
     
     
-    public abstract void onWifiReceived();
+    public void onWifiReceived(){};
 
     /** Called when the service is being created. */
     @Override
