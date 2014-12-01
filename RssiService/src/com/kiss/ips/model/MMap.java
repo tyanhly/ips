@@ -10,10 +10,10 @@ import android.net.wifi.ScanResult;
 import android.util.Log;
 
 import com.kiss.ips.entity.EMap;
+import com.kiss.ips.entity.Ibeacon;
 import com.kiss.ips.entity.Position;
 import com.kiss.ips.entity.Wifi;
-import com.kiss.ips.entity.Ibeacon;
-import com.kiss.math.KMath;
+import com.kiss.math.MathUtil;
 import com.kiss.math.SLineEquation;
 
 public class MMap {
@@ -68,11 +68,13 @@ public class MMap {
             emap.setWifis(localWifis);
         }
     }
+    
+    
 
     public static Position getCurrentPosition(EMap emap) {
         
-        Set wifiSet = emap.currentWifis.entrySet();
-        Iterator iterator = wifiSet.iterator();
+        Set<Map.Entry<String, Wifi>> wifiSet = emap.currentWifis.entrySet();
+        Iterator<Map.Entry<String, Wifi>> iterator = wifiSet.iterator();
         int wifiSize = wifiSet.size();
         
         if(wifiSize == 0){
@@ -94,16 +96,18 @@ public class MMap {
             float c = x1*x1 + y1*y1 - (x2*x2 - y2*y2) - R1*R1 + R2*R2;
             try {
                 SLineEquation sl = new SLineEquation(a, b, c);
-                KMath.F1Result result = KMath.solveF1(en1.getValue().exportToCircleEquation(), sl);
+                MathUtil.F1Result result = MathUtil.solveF1(en1.getValue().exportToCircleEquation(), sl);
                 return result.getCentral();
             } catch (Exception e) {
                 Log.d("TungLog", "Wifi data error");
                 return en1.getValue().getPos();
             }
         }else if(wifiSize > 2){
-            while (iterator.hasNext()) {
-                
-            }
+//            Map.Entry<String, Wifi> en1 = (Map.Entry<String, Wifi>) iterator.next();
+//            while (iterator.hasNext()) {
+//                
+//            }
+            return null;
         }
         return null;
 

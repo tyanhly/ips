@@ -84,9 +84,9 @@ public class Wifi extends Wireless {
             t = -rssi % 10;
             t = 42000 + t*500;
         default:
-            t = 120;
+            t = 47000;
         }
         currentDistance = (int) t;
-        return  t;
+        return currentDistance;
     }
 }

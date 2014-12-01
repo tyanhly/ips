@@ -1,5 +1,6 @@
 package com.kiss.ips.entity;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -7,11 +8,11 @@ public class EMap {
 
     private int height;
     private int width;
-    private Map<String, Ibeacon> ibeacons;
-    private Map<String, Wifi> wifis;
+    private Map<String, Ibeacon> ibeacons = new HashMap<String, Ibeacon>();
+    private Map<String, Wifi> wifis = new HashMap<String, Wifi>();;
     
-    public TreeMap<String, Wifi> currentWifis;
-    public TreeMap<String, Wifi> currentIbeacons;
+    public TreeMap<String, Wifi> currentWifis = new TreeMap<String, Wifi>();
+    public TreeMap<String, Wifi> currentIbeacons= new TreeMap<String, Wifi>();
 
     public EMap() {
     }

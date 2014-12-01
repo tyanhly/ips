@@ -15,15 +15,16 @@ public abstract class Wireless {
     }
     
     public Wireless(int x, int y){
-        this.pos.x = x;
-        this.pos.y = y;
+        this.pos = new Position(x, y);
     }
     public int getRssi() {
+        
         return rssi;
     }
 
     public void setRssi(int rssi) {
         this.rssi = rssi;
+        estimateDistanceByRssi();
     }
 
     public String getMac() {
@@ -62,7 +63,6 @@ public abstract class Wireless {
     
     
     public CircleEquation exportToCircleEquation() throws Exception{
-        this.estimateDistanceByRssi();
         CircleEquation ce = new CircleEquation((float) this.pos.x, (float) this.pos.y, (float) this.getCurrentDistance());
         return ce;
     }

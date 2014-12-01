@@ -15,7 +15,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 public class WifiService extends Service {
-    private static String _TAG = "WiFiService";
+    private static String _TAG = "TungLyLog";
     private final IBinder _mBinder = new WifiBinder();
     private List<ScanResult> _wifis = new ArrayList<ScanResult>();
     private WifiManager _wifiManager;
