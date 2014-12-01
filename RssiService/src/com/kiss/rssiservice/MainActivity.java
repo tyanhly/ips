@@ -3,25 +3,32 @@ package com.kiss.rssiservice;
 import java.util.List;
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.net.wifi.ScanResult;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.kiss.ips.entity.EMap;
 import com.kiss.ips.entity.Position;
 import com.kiss.ips.entity.Wifi;
 import com.kiss.ips.model.MMap;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements SensorEventListener {
+    private WifiService s;
     SensorManager mSensorManager;
-    Sensor accelerometer;
-    Sensor magnetometer;
+    Sensor gyrosmeter;
 
     private TextView ax;
     private TextView ay;
@@ -34,18 +41,44 @@ public class MainActivity extends Activity {
         ax = (TextView) findViewById(R.id.ax);
         ay = (TextView) findViewById(R.id.ay);
 
-        list = (ListView) findViewById(R.id.listView1);
+        list = (ListView)findViewById(R.id.listView1);
+        MainActivity.this.mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        
+        MainActivity.this.gyrosmeter = mSensorManager
+                .getDefaultSensor(Sensor.TYPE_GYROSCOPE);
 
     }
+
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+        public void onServiceConnected(ComponentName className, IBinder binder) {
+            Log.d("TungLyLog", "onServiceConnected");
+            WifiService.WifiBinder b = (WifiService.WifiBinder) binder;
+            s = b.getService();
+            Toast.makeText(MainActivity.this, "set s = WifiService",
+                    Toast.LENGTH_SHORT).show();
+
+        }
+
+        
+        public void onServiceDisconnected(ComponentName className) {
+            Log.d("TungLyLog", "onServiceDisconnected");
+            s = null;
+
+        }
+    };
 
     @Override
     protected void onResume() {
         super.onResume();
 
         Log.d("TungLyLog", "onResume");
-        Intent intent = new Intent(this, WifiServiceImpl.class);
-        // bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        Intent intent = new Intent(this.getBaseContext(), WifiService.class);
+        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
         startService(intent);
+
+        MainActivity.this.mSensorManager.registerListener(MainActivity.this,
+                gyrosmeter, SensorManager.SENSOR_DELAY_UI);
 
     }
 
@@ -54,9 +87,10 @@ public class MainActivity extends Activity {
         Log.d("TungLyLog", "onPause");
         super.onPause();
 
-        // unbindService(mConnection);
-        stopService(new Intent(this, WifiServiceImpl.class));
+        unbindService(mConnection);
+        stopService(new Intent(getBaseContext(), WifiService.class));
 
+        mSensorManager.unregisterListener(MainActivity.this);
     }
 
     @Override
@@ -66,36 +100,43 @@ public class MainActivity extends Activity {
 
     }
 
-    
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
+            if (s != null) {
+                List<ScanResult> wifis = s.getListWifis();
+                if (wifis.size() > 0) {
+                    EMap emap = MMap.getEMap();
+                    MMap.setRssiForEmap(emap, wifis);
 
-    public class WifiServiceImpl extends WifiService {
-        public void setListView() {
-
-            String[] lwifis = new String[MMap.getEMap().currentWifis.size()];
-
-            int i = 0;
-            for (Wifi w : MMap.getEMap().currentWifis.values()) {
-                lwifis[i++] = w.getMac() + " - RSSI: " + w.getRssi() + " - Dis:"
-                        + w.getCurrentDistance();
-            }
-
-            MainActivity.this.list.setAdapter(new ArrayAdapter<String>(MainActivity.this.getApplicationContext(),
-                    android.R.layout.simple_list_item_1, lwifis));
-        }
-        
-        public void onWifiReceived() {
-            List<ScanResult> wifis = this.getListWifis();
-            if (wifis.size() > 0) {
-                EMap emap = MMap.getEMap();
-                MMap.setRssiForEmap(emap, wifis);
-
-                this.setListView();
-
-                Position currentPos = MMap.getCurrentPosition(emap);
-
-                MainActivity.this.ax.setText("X: " + currentPos.x);
-                MainActivity.this.ay.setText("Y: " + currentPos.y);
+                    setListView();
+                    
+                    Position currentPos = MMap.getCurrentPosition(emap);
+                    
+                    ax.setText("X: " + currentPos.x);
+                    ay.setText("Y: " + currentPos.y);
+                }
             }
         }
     }
+
+    public void setListView(){
+
+        String[] lwifis = new String[MMap.getEMap().currentWifis.size()];
+        
+        int i=0;
+        for(Wifi w: MMap.getEMap().currentWifis.values()){
+            lwifis[i++] = w.getMac() + " - RSSI: " + w.getRssi() + " - Dis:" + w.getCurrentDistance();
+        }
+        
+        list.setAdapter(new ArrayAdapter<String>(getApplicationContext(),
+        android.R.layout.simple_list_item_1, lwifis));
+    }
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+        // TODO Auto-generated method stub
+
+    }
+
+    
 }
