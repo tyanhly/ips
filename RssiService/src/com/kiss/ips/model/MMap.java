@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import android.net.wifi.ScanResult;
 import android.util.Log;
@@ -55,7 +56,7 @@ public class MMap {
 
         if (wifis.size() > 0) {
             Map<String, Wifi> localWifis = emap.getWifis();
-
+            emap.currentWifis.clear();
             for (ScanResult wifi : wifis) {
                 if (localWifis.containsKey(wifi.SSID)) {
                     Wifi currentWifi = localWifis.get(wifi.SSID);
@@ -65,7 +66,7 @@ public class MMap {
                                     + wifi.SSID, currentWifi);
                 }
             }
-            emap.setWifis(localWifis);
+//            emap.setWifis(localWifis);
         }
     }
     
@@ -99,7 +100,7 @@ public class MMap {
                 MathUtil.F1Result result = MathUtil.solveF1(en1.getValue().exportToCircleEquation(), sl);
                 return result.getCentral();
             } catch (Exception e) {
-                Log.d("TungLog", "Wifi data error");
+                Log.d("TungLog", "Wifi data error: " + e.getMessage());
                 return en1.getValue().getPos();
             }
         }else if(wifiSize > 2){
