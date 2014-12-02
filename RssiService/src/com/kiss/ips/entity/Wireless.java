@@ -45,7 +45,7 @@ public abstract class Wireless {
     }
     
     public CircleEquation exportToCircleEquation() throws Exception{
-        CircleEquation ce = new CircleEquation((float) this.pos.x, (float) this.pos.y, (float) this.getCurrentDistance());
+        CircleEquation ce = new CircleEquation((double) this.pos.x, (double) this.pos.y, (float) this.getCurrentDistance());
         return ce;
     }
     

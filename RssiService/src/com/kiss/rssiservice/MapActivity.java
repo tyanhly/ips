@@ -1,6 +1,5 @@
 package com.kiss.rssiservice;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import android.app.Activity;
@@ -15,8 +14,10 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+import android.widget.RelativeLayout.LayoutParams;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,17 +25,15 @@ import com.estimote.sdk.Beacon;
 import com.estimote.sdk.BeaconManager;
 import com.estimote.sdk.Region;
 import com.kiss.ips.entity.EMap;
-import com.kiss.ips.entity.Ibeacon;
 import com.kiss.ips.entity.Position;
-import com.kiss.ips.entity.Wifi;
 import com.kiss.ips.model.MMap;
 
-public class MainActivity extends Activity {// implements SensorEventListener {
+public class MapActivity extends Activity {// implements SensorEventListener {
 
     private WifiService s;
     SensorManager mSensorManager;
     Sensor gyrosmeter;
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "MapActivity";
     public static final String EXTRAS_TARGET_ACTIVITY = "extrasTargetActivity";
     public static final String EXTRAS_BEACON = "extrasBeacon";
 
@@ -46,20 +45,20 @@ public class MainActivity extends Activity {// implements SensorEventListener {
 
     private TextView ax;
     private TextView ay;
-    private ListView wifiList;
-    private ListView ibeaconList;
+    private ImageView map;
+    private ImageView point;
+    
 
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_map);
         ax = (TextView) findViewById(R.id.ax);
         ay = (TextView) findViewById(R.id.ay);
-
-        wifiList = (ListView) findViewById(R.id.listView1);
-        ibeaconList = (ListView) findViewById(R.id.listView2);
+        map = (ImageView) findViewById(R.id.map);
+        point = (ImageView) findViewById(R.id.point);
 
         com.estimote.sdk.utils.L.enableDebugLogging(false);
         // Configure BeaconManager.
@@ -75,7 +74,7 @@ public class MainActivity extends Activity {// implements SensorEventListener {
                         if (beacons.size() > 0) {
                             EMap emap = MMap.getEMap();
                             MMap.setIbeaconRssiForEmap(emap, beacons);
-                            MainActivity.this.updateValues(emap);
+                            MapActivity.this.updateValues(emap);
                         }
                     }
                 });
@@ -152,7 +151,7 @@ public class MainActivity extends Activity {// implements SensorEventListener {
             Log.d(TAG, "onServiceConnected");
             WifiService.WifiBinder b = (WifiService.WifiBinder) binder;
             s = b.getService();
-            Toast.makeText(MainActivity.this, "set s = WifiService",
+            Toast.makeText(MapActivity.this, "set s = WifiService",
                     Toast.LENGTH_SHORT).show();
 
         }
@@ -173,7 +172,7 @@ public class MainActivity extends Activity {// implements SensorEventListener {
                     beaconManager.startRanging(ALL_ESTIMOTE_BEACONS_REGION);
                 } catch (RemoteException e) {
                     Toast.makeText(
-                            MainActivity.this,
+                            MapActivity.this,
                             "Cannot start ranging, something terrible happened",
                             Toast.LENGTH_LONG).show();
                     Log.e(TAG, "Cannot start ranging", e);
@@ -184,38 +183,19 @@ public class MainActivity extends Activity {// implements SensorEventListener {
 
     public void updateValues(EMap emap) {
 
-        MainActivity.this.setListView(emap);
         Position currentPos = MMap.getCurrentPoint(emap);
         if (currentPos != null) {
-            MainActivity.this.ax.setText("X: " + currentPos.x);
-            MainActivity.this.ay.setText("Y: " + currentPos.y);
+            MapActivity.this.ax.setText("X: " + currentPos.x);
+            MapActivity.this.ay.setText("Y: " + currentPos.y);
+            RelativeLayout.LayoutParams lp = (LayoutParams) point.getLayoutParams();
+            
+            lp.setMargins((int) currentPos.x/10, (int) currentPos.y/10, 0, 0);
+            point.setVisibility(1); 
+            
+            point.setLayoutParams(lp);
         }
 
     }
 
-    public void setListView(EMap emap) {
-
-        ArrayList<String> lwifis = new ArrayList<String>();
-
-        ArrayList<String> ibeacons = new ArrayList<String>();
-
-        for (Wifi w : emap.currentWifis.values()) {
-            lwifis.add(w.getMac() + " - RSSI: " + w.getRssi() + " - Dis:"
-                    + w.getCurrentDistance());
-        }
-        for (Ibeacon ib : emap.currentIbeacons.values()) {
-            ibeacons.add(ib.getMac() + " - RSSI: "
-                    + ib.getBeacon().getRssi() + " - Dis:"
-                    + ib.getCurrentDistance());
-        }
-        
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_1, lwifis);
-        wifiList.setAdapter(adapter);
-        ArrayAdapter<String> adapter1 = new ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_1,  ibeacons);
-        ibeaconList.setAdapter(adapter1);
-
-    }
 
 }

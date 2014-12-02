@@ -8,11 +8,11 @@ public class CircleEquation {
     /**
      * (x-x0)^2 + (y-y0)^2 - R^2 = 0
      */
-    private float x0;
-    private float y0;
-    private float R;
+    private double x0;
+    private double y0;
+    private double R;
     
-    public CircleEquation(float x0, float y0, float R) throws Exception{
+    public CircleEquation(double x0, double y0, double R) throws Exception{
         if(R==0){
             throw new Exception("R=0; it is not a circle");
         }
@@ -21,44 +21,44 @@ public class CircleEquation {
         this.R = R;
     }
 
-    public float getX(float y) throws Exception{
+    public double getX(double y) throws Exception{
         if(y-y0 > R){
             throw new Exception("y-y0>R; Data fail");
         }
-        float x = (float) Math.sqrt(R*R - (y-y0)*(y-y0));
+        double x = (double) Math.sqrt(R*R - (y-y0)*(y-y0));
         return x;
     }
     
 
-    public float getY(float x) throws Exception{
+    public double getY(double x) throws Exception{
         if(x-x0 > R){
             throw new Exception("x-x0>R; Data fail");
         }
-        float y = (float) Math.sqrt(R*R - (x-x0)*(x-x0));
+        double y = (double) Math.sqrt(R*R - (x-x0)*(x-x0));
         return y;
     }
 
-    public float getX0() {
+    public double getX0() {
         return x0;
     }
 
-    public void setX0(float x0) {
+    public void setX0(double x0) {
         this.x0 = x0;
     }
 
-    public float getY0() {
+    public double getY0() {
         return y0;
     }
 
-    public void setY0(float y0) {
+    public void setY0(double y0) {
         this.y0 = y0;
     }
 
-    public float getR() {
+    public double getR() {
         return R;
     }
 
-    public void setR(float r) {
+    public void setR(double r) {
         R = r;
     }
     

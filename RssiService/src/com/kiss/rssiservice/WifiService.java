@@ -3,6 +3,8 @@ package com.kiss.rssiservice;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.kiss.ips.model.MMap;
+
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -36,7 +38,9 @@ public class WifiService extends Service {
     };
     
     
-    public void onWifiReceived(){};
+    public void onWifiReceived(){
+        MMap.setWifiRssiForEmap(MMap.getEMap(), _wifis);
+    };
 
     /** Called when the service is being created. */
     @Override

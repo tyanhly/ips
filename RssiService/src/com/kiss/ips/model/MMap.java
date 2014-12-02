@@ -9,7 +9,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import android.net.wifi.ScanResult;
-import android.provider.SyncStateContract.Constants;
 import android.util.Log;
 
 import com.estimote.sdk.Beacon;
@@ -39,7 +38,7 @@ public class MMap {
         Map<String, Ibeacon> ibeacons = new HashMap<String, Ibeacon>();
         Map<String, Wifi> wifis = new HashMap<String, Wifi>();
         Ibeacon ib1 = new Ibeacon("e3:16:78:6b:f5:5e",new Position(4300, 0));
-        Ibeacon ib2 = new Ibeacon("f5:d2:7d:c7:de:9d",new Position(4000, 4000));
+        Ibeacon ib2 = new Ibeacon("f5:d2:7d:c7:de:9d",new Position(4600, 4000));
         Ibeacon ib3 = new Ibeacon("d9:29:98:43:6d:49",new Position(400, 6000));
         Ibeacon ib4 = new Ibeacon("c2:77:57:87:48:16",new Position(4000, 6000));
 
@@ -98,7 +97,7 @@ public class MMap {
             emap.currentIbeacons.clear();
             for (Beacon beacon : beacons) {
                 if (localBeacons.containsKey(beacon.getMacAddress().toLowerCase())) {
-                    Ibeacon ib = localBeacons.get(beacon.getMacAddress());
+                    Ibeacon ib = localBeacons.get(beacon.getMacAddress().toLowerCase());
                     ib.setCurrentDistance((long) Utils.computeAccuracy(beacon)*1000);
                     ib.setBeacon(beacon);
                     emap.currentIbeacons
@@ -216,7 +215,7 @@ public class MMap {
         long x2 = w2.getPos().x;
         long y2 = w2.getPos().y;
         long R2 = w2.getCurrentDistance();
-        
+        Log.d(com.kiss.config.Constants.ANDROID_LOG_TAG, "w1: " + w1.getCurrentDistance() + "- w2:" + w2.getCurrentDistance());
         float a = 2*(x2-x1);
         float b = 2*(y2-y1);
         float c = x1*x1 + y1*y1 - (x2*x2 - y2*y2) - R1*R1 + R2*R2;
