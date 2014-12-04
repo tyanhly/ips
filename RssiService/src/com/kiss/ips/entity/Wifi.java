@@ -21,7 +21,7 @@ public class Wifi extends Wireless {
 
     public long estimateDistanceByRssi() {
         int tmp = (int) -rssi / 10;
-        int t;
+        long t;
         switch (tmp) {
         case 0:
             t = 300;
@@ -97,7 +97,7 @@ public class Wifi extends Wireless {
             t = 47000;
             break;
         }
-        currentDistance = (long) t;
+        currentDistance = t;
         return currentDistance;
     }
 

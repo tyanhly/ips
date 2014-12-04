@@ -1,6 +1,7 @@
 package com.kiss.rssiservice;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 import android.app.Activity;
@@ -9,12 +10,14 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -29,7 +32,7 @@ import com.kiss.ips.entity.Position;
 import com.kiss.ips.entity.Wifi;
 import com.kiss.ips.model.MMap;
 
-public class MainActivity extends Activity {// implements SensorEventListener {
+public class MainActivitybak extends Activity {// implements SensorEventListener {
 
     private WifiService s;
     SensorManager mSensorManager;
@@ -50,6 +53,8 @@ public class MainActivity extends Activity {// implements SensorEventListener {
     private ListView ibeaconList;
 
 
+    private SharedPreferences sharedPref;
+    private SharedPreferences.Editor editor;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate");
@@ -61,6 +66,9 @@ public class MainActivity extends Activity {// implements SensorEventListener {
         wifiList = (ListView) findViewById(R.id.listView1);
         ibeaconList = (ListView) findViewById(R.id.listView2);
 
+        sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+        editor = sharedPref.edit();
+        
         com.estimote.sdk.utils.L.enableDebugLogging(false);
         // Configure BeaconManager.
         beaconManager = new BeaconManager(this);
@@ -75,7 +83,7 @@ public class MainActivity extends Activity {// implements SensorEventListener {
                         if (beacons.size() > 0) {
                             EMap emap = MMap.getEMap();
                             MMap.setIbeaconRssiForEmap(emap, beacons);
-                            MainActivity.this.updateValues(emap);
+                            MainActivitybak.this.updateValues(emap);
                         }
                     }
                 });
@@ -87,22 +95,6 @@ public class MainActivity extends Activity {// implements SensorEventListener {
     protected void onStart() {
         super.onStart();
 
-        Log.d(TAG, "onStart");
-        // Check if device supports Bluetooth Low Energy.
-        if (!beaconManager.hasBluetooth()) {
-            Toast.makeText(this, "Device does not have Bluetooth Low Energy",
-                    Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        // If Bluetooth is not enabled, let user enable it.
-        if (!beaconManager.isBluetoothEnabled()) {
-            Intent enableBtIntent = new Intent(
-                    BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-        } else {
-            connectToService();
-        }
     }
 
     @Override
@@ -127,6 +119,22 @@ public class MainActivity extends Activity {// implements SensorEventListener {
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
         startService(intent);
 
+        Log.d(TAG, "onStart");
+        // Check if device supports Bluetooth Low Energy.
+        if (!beaconManager.hasBluetooth()) {
+            Toast.makeText(this, "Device does not have Bluetooth Low Energy",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // If Bluetooth is not enabled, let user enable it.
+        if (!beaconManager.isBluetoothEnabled()) {
+            Intent enableBtIntent = new Intent(
+                    BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+        } else {
+            connectToService();
+        }
     }
 
     @Override
@@ -152,7 +160,7 @@ public class MainActivity extends Activity {// implements SensorEventListener {
             Log.d(TAG, "onServiceConnected");
             WifiService.WifiBinder b = (WifiService.WifiBinder) binder;
             s = b.getService();
-            Toast.makeText(MainActivity.this, "set s = WifiService",
+            Toast.makeText(MainActivitybak.this, "set s = WifiService",
                     Toast.LENGTH_SHORT).show();
 
         }
@@ -173,7 +181,7 @@ public class MainActivity extends Activity {// implements SensorEventListener {
                     beaconManager.startRanging(ALL_ESTIMOTE_BEACONS_REGION);
                 } catch (RemoteException e) {
                     Toast.makeText(
-                            MainActivity.this,
+                            MainActivitybak.this,
                             "Cannot start ranging, something terrible happened",
                             Toast.LENGTH_LONG).show();
                     Log.e(TAG, "Cannot start ranging", e);
@@ -184,12 +192,35 @@ public class MainActivity extends Activity {// implements SensorEventListener {
 
     public void updateValues(EMap emap) {
 
-        MainActivity.this.setListView(emap);
-        Position currentPos = MMap.getCurrentPoint(emap);
-        if (currentPos != null) {
-            MainActivity.this.ax.setText("X: " + currentPos.x);
-            MainActivity.this.ay.setText("Y: " + currentPos.y);
+        Position defaultPos = new Position(0,0);
+        
+        String jsonLastPosString = sharedPref.getString(com.kiss.config.Constants.LAST_POSITION_STRING_KEY, defaultPos.toJSon());
+        
+        Position lastPos = new Position(jsonLastPosString);
+        
+        MainActivitybak.this.setListView(emap);
+        Position currentPos;
+        try {
+
+
+            currentPos = MMap.getCurrentPoint(emap, lastPos);
+            if (currentPos != null) {
+                MainActivitybak.this.ax.setText("X: " + currentPos.x);
+                MainActivitybak.this.ay.setText("Y: " + currentPos.y);
+            }
+
+
+            Calendar c = Calendar.getInstance(); 
+            currentPos.setTime(c.get(Calendar.MILLISECOND));
+            
+            editor.putString(com.kiss.config.Constants.LAST_POSITION_STRING_KEY, currentPos.toJSon());
+            editor.commit();
+        } catch (Exception e) {
+            Toast.makeText(this,e.getMessage(), 
+                    Toast.LENGTH_LONG).show();
+            e.printStackTrace();
         }
+        
 
     }
 
@@ -217,5 +248,8 @@ public class MainActivity extends Activity {// implements SensorEventListener {
         ibeaconList.setAdapter(adapter1);
 
     }
-
+    public void clickViewMap(View view){
+        Intent intent = new Intent(this, MapActivity.class);
+        startActivity(intent);
+    }
 }

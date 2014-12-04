@@ -7,7 +7,8 @@ public class MathUtil {
     public static MathUtil.F1Result solveF1(CircleEquation ce, SLineEquation sl)
             throws Exception {
         /**
-         * F1 is: (x-x0)^2 + (y-y0)^2 - R^2 = 0 ax + by +c = 0
+         * F1 is: (x-x0)^2 + (y-y0)^2 - R^2 = 0
+         *         ax + by +c = 0
          * 
          */
         MathUtil.F1Result f1Result = new MathUtil.F1Result();
@@ -39,6 +40,16 @@ public class MathUtil {
         return f1Result;
     }
 
+    public static SLineEquation getSquareSLineOnC1C2(CircleEquation c1, CircleEquation c2) throws Exception{
+
+        double a = 2 * (c2.getX0() - c1.getX0());
+        double b = 2 * (c2.getY0() - c1.getY0());
+        double c = c1.getX0()*c1.getX0() + c1.getY0()*c1.getY0() - c1.getR()*c1.getR() 
+                 - (c2.getX0()*c2.getX0() + c2.getY0()*c2.getY0() - c2.getR()*c2.getR()) ;
+        SLineEquation sl = new SLineEquation(a, b, c);
+        return sl;
+    }
+    
     public static class F1Result {
         public Position p1;
         public Position p2;

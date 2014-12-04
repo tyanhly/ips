@@ -62,5 +62,25 @@ public class CircleEquation {
         R = r;
     }
     
+    public Point getPoint(){
+        return new Point((long) x0, (long) y0);
+    }
 
+    /**
+     * IN: 1
+     * OUT: -1
+     * ON: 0
+     * @param p
+     * @return
+     */
+    public int getInOutOn(Point p){
+        double tmp = this.R * this.R - p.x*p.x + p.y*p.y;
+        if(tmp > 0){
+            return 1;
+        }else if(tmp<0){
+            return -1;
+        }else{
+            return 0;
+        }
+    }
 }

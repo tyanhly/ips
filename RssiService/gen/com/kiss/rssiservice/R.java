@@ -1653,7 +1653,6 @@ containing a value of this type.
         public static final int action_mode_bar=0x7f05002e;
         public static final int action_mode_bar_stub=0x7f05002d;
         public static final int action_mode_close_button=0x7f050020;
-        public static final int action_settings=0x7f050048;
         public static final int activity_chooser_view_content=0x7f050021;
         public static final int always=0x7f05000d;
         public static final int ax=0x7f05003f;
@@ -1681,6 +1680,7 @@ containing a value of this type.
         public static final int listView2=0x7f050044;
         public static final int list_item=0x7f050025;
         public static final int map=0x7f050046;
+        public static final int mapItem=0x7f050048;
         public static final int middle=0x7f050013;
         public static final int never=0x7f05000b;
         public static final int none=0x7f050004;

@@ -9,53 +9,55 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="0" />
-    
 
     <TextView
         android:id="@+id/ay"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="0" 
-        android:layout_below="@id/ax"/>
-
-        
+        android:layout_below="@id/ax"
+        android:text="0" />
 
     <TextView
         android:id="@+id/Wifi"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="Wifi"
-        android:layout_below="@id/ay" />
-   <ListView
-      android:id="@+id/listView1"
-      android:layout_width="fill_parent"
-      android:layout_height="wrap_content"
-      android:layout_alignParentTop="true"
-      android:layout_centerHorizontal="true"
-      android:drawSelectorOnTop="false"
-      android:listSelector="@android:color/darker_gray" 
-      android:layout_below="@id/Wifi">
+        android:layout_below="@id/ay"
+        android:text="Wifi" />
 
-   </ListView>
-        
+    <ListView
+        android:id="@+id/listView1"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_below="@id/Wifi"
+        android:layout_centerHorizontal="true"
+        android:drawSelectorOnTop="false"
+        android:listSelector="@android:color/darker_gray" >
+    </ListView>
+
     <TextView
         android:id="@+id/ibeacon"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="Ibeacon"
-        android:layout_below="@id/listView1" />
-      
-   <ListView
-      android:id="@+id/listView2"
-      android:layout_width="fill_parent"
-      android:layout_height="wrap_content"
-      android:layout_alignParentTop="true"
-      android:layout_centerHorizontal="true"
-      android:drawSelectorOnTop="false"
-      android:listSelector="@android:color/darker_gray" 
-      android:layout_below="@id/ibeacon">
-       
-   </ListView>
-   
-       
-</LinearLayout> 
+        android:layout_below="@id/listView1"
+        android:text="Ibeacon" />
+
+    <ListView
+        android:id="@+id/listView2"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_below="@id/ibeacon"
+        android:layout_centerHorizontal="true"
+        android:drawSelectorOnTop="false"
+        android:listSelector="@android:color/darker_gray" >
+    </ListView>
+<!-- 
+    <Button
+        android:id="@+id/btnMap"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:onClick="clickViewMap"
+        android:text="View Map" />
+ -->
+</LinearLayout>

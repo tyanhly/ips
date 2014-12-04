@@ -1,5 +1,6 @@
 package com.kiss.math;
 
+
 /**
  * Equation: ax + by + c = 0
  * @author tyanhly
@@ -19,6 +20,15 @@ public class SLineEquation {
         this.a = a;
         this.b = b;
         this.c = c;
+    }
+    
+    public SLineEquation(Point p1, Point p2){
+        double vectory = p1.x - p2.x;
+        double vectorx = -(p1.y - p2.y);
+        this.a = vectorx;
+        this.b = vectory;
+        this.c = -vectorx*p1.x - vectory*p1.y;
+        
     }
     
     public double getX(double y) throws Exception{
