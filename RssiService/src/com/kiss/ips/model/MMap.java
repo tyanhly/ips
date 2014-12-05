@@ -202,41 +202,50 @@ public class MMap {
             List<Position> ps = new ArrayList<Position>();
             CircleEquation userCircle = lastPos
                     .getCircleEquationByMilliSeconds();
-            CircleEquation c1 = iterator.next().getValue()
-                    .exportToCircleEquation();
+
             int c = 1;
             while (iterator.hasNext()) {
-                Map.Entry<String, Ibeacon> tmpEn = iterator.next();
-                CircleEquation tmpC = tmpEn.getValue().exportToCircleEquation();
-                if (c > 3) {
-                    break;
-                } else {
-                    Position p = getMidPosition(c1, tmpC);
-                    ps.add(p);
-                    c++;
+
+                CircleEquation c1 = iterator.next().getValue()
+                        .exportToCircleEquation();
+                
+                Iterator<Entry<String, Ibeacon>> iterator1 = ibeaconSet
+                        .iterator();
+                
+                for (int i = 0; i < c; i++)
+                    iterator1.next();
+
+                int cc=1;
+                while (iterator1.hasNext()) {
+                    CircleEquation c2 = iterator1.next().getValue()
+                            .exportToCircleEquation();
+                    if (cc > 2) {
+                        break;
+                    } else {
+                        Position p = getMidPosition(c1, c2);
+                        ps.add(p);
+                        cc++;
+                    }
                 }
+                if (c > 2) {
+                    break;
+                }
+                c++;
             }
             long vx = 0;
             long vy = 0;
             int i = 0;
-            long vx1 = 0;
-            long vy1 = 0;
-            int i1 = 0;
             for (Position p : ps) {
                 if (userCircle.getInOutOn(p) > -1) {
                     vx += p.x;
                     vy += p.y;
                     i++;
-                } else {
-                    vx1 += p.x;
-                    vy1 += p.y;
-                    i1++;
                 }
             }
             if (i > 0) {
                 return new Position((long) vx / i, (long) vy / i);
             }
-            return new Position((long) vx1 / i1, (long) vy1 / i1);
+            return ps.get(0);
         }
 
     }

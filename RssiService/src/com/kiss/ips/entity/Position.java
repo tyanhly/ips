@@ -49,7 +49,7 @@ public class Position extends Point{
 
     public CircleEquation getCircleEquationByMilliSeconds() throws Exception{
         long t = (new Date()).getTime();
-        long msecs = (t - this.time);
+        long msecs = (t - this.time); //=mm
         return getCircleEquationByMilliSeconds(msecs);
     }
     
