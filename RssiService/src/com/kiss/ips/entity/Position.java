@@ -27,7 +27,11 @@ public class Position extends Point{
     public Position(long x, long y) {
         super(x, y);
     }
-    
+
+    public Position(long x, long y, long time) {
+        super(x, y);
+        setTime(time);
+    }
     public Position(String jsonString){
         JSONObject json;
         try {

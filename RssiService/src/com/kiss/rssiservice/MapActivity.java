@@ -30,6 +30,7 @@ import com.estimote.sdk.BeaconManager;
 import com.estimote.sdk.Region;
 import com.kiss.ips.entity.EMap;
 import com.kiss.ips.entity.Position;
+import com.kiss.ips.entity.RPosition;
 import com.kiss.ips.model.MMap;
 
 @TargetApi(Build.VERSION_CODES.GINGERBREAD)
@@ -46,6 +47,7 @@ public class MapActivity extends Activity {// implements
 
     private BeaconManager beaconManager;
 
+    private static final int SENSOR_DEPLAY_TIME = 50;
     private TextView ax;
     private TextView ay;
     private ImageView point;
@@ -60,9 +62,9 @@ public class MapActivity extends Activity {// implements
 
     private float[] rotationMatrix = new float[16];
     private float[] linearOffset = new float[4];
-    private ArrayList<Sensor> sensors;
+    private ArrayList<Sensor> sensors= new ArrayList<Sensor>();
     private float[] rotationMatrixInverse = new float[16];
-    
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate");
@@ -71,7 +73,7 @@ public class MapActivity extends Activity {// implements
         ax = (TextView) findViewById(R.id.ax);
         ay = (TextView) findViewById(R.id.ay);
         point = (ImageView) findViewById(R.id.point);
-        
+
         sharedPref = this.getPreferences(Context.MODE_PRIVATE);
         editor = sharedPref.edit();
 
@@ -88,7 +90,8 @@ public class MapActivity extends Activity {// implements
                     public void run() {
                         if (beacons.size() > 0) {
                             MapActivity.this.emap = MMap.getEMap();
-                            MMap.setIbeaconRssiForEmap(MapActivity.this.emap, beacons);
+                            MMap.setIbeaconRssiForEmap(MapActivity.this.emap,
+                                    beacons);
                         }
                     }
                 });
@@ -101,12 +104,19 @@ public class MapActivity extends Activity {// implements
 
     }
 
-
     private void addSensor(int sensorType) {
         Sensor sensor = mSensorManager.getDefaultSensor(sensorType);
-        sensors.add(sensor);
-        mSensorManager.registerListener(mySensorEventListener, sensor,
-                SensorManager.SENSOR_DELAY_FASTEST);
+        if (sensor != null) {
+            sensors.add(sensor);
+            mSensorManager.registerListener(mySensorEventListener, sensor,
+                    SENSOR_DEPLAY_TIME);
+            Log.i("TungLyLog", "Registerered for  Sensor");
+        } else {
+            Log.e("TungLyLog", "Registerered for  Sensor");
+            Toast.makeText(this, "Sensor not found",
+                    Toast.LENGTH_LONG).show();
+            finish();
+        }
     }
 
     @Override
@@ -115,7 +125,6 @@ public class MapActivity extends Activity {// implements
 
         Log.d(TAG, "onStart");
     }
-
 
     private final SensorEventListener mySensorEventListener = new SensorEventListener() {
 
@@ -130,34 +139,62 @@ public class MapActivity extends Activity {// implements
 
     };
 
-    int i=0;
+    int i = 0;
+
+    public float[] getAcceleration(float[] values){
+
+        linear[0] = values[0] - linearOffset[0];
+        linear[1] = values[1] - linearOffset[1];
+        linear[2] = values[2] - linearOffset[2];
+
+        SensorManager.getRotationMatrixFromVector(rotationMatrix, rotation);
+        android.opengl.Matrix.invertM(rotationMatrixInverse, 0,
+                rotationMatrix, 0);
+
+        float[] accelerates = new float[4];
+        android.opengl.Matrix.multiplyMV(accelerates, 0,
+                rotationMatrixInverse, 0, linear, 0);
+        return accelerates;
+    }
     private void calibrate(SensorEvent event) {
         switch (event.sensor.getType()) {
-            case Sensor.TYPE_ROTATION_VECTOR:
-                System.arraycopy(event.values, 0, rotation, 0, 3);
-                break;
-            case Sensor.TYPE_LINEAR_ACCELERATION:
-                if(linearOffset[0] == 0){
-                    System.arraycopy(event.values, 0, linearOffset, 0, 3);
-                }
+        case Sensor.TYPE_ROTATION_VECTOR:
+            System.arraycopy(event.values, 0, rotation, 0, 3);
+            break;
+        case Sensor.TYPE_LINEAR_ACCELERATION:
+            if (linearOffset[0] == 0) {
+                System.arraycopy(event.values, 0, linearOffset, 0, 3);
+            }
 
-                linear[0] = event.values[0] - linearOffset[0];
-                linear[1] = event.values[1] - linearOffset[1];
-                linear[2] = event.values[2] - linearOffset[2];
+            float[] acceleration = getAcceleration(event.values);
+
+            try {
+
+                long now = new Date().getTime();
+                RPosition defaultRPos = new RPosition(new float[] { (float)  0.0, (float)0.0, (float) 0.0 },
+                        new float[] {(float)  0.0, (float)0.0, (float) 0.0 }, now-SENSOR_DEPLAY_TIME);
                 
-                if(i%50==0){
-                    SensorManager.getRotationMatrixFromVector(rotationMatrix, rotation);
-                    android.opengl.Matrix.invertM(rotationMatrixInverse, 0, rotationMatrix , 0);
-                    float[] orientation = new float[4];
-                    android.opengl.Matrix.multiplyMV(orientation, 0 , rotationMatrixInverse, 0, linear, 0);
-                    MapActivity.this.updateValues(MapActivity.this.emap, linearOffset, orientation);
-                }
-                
-                break;
+                String jsonLastRPosString = sharedPref.getString(
+                com.kiss.config.Constants.LAST_RPOSITION_STRING_KEY,
+                        defaultRPos.toJSon());
+
+                RPosition lastRPos = new RPosition(jsonLastRPosString);
+                long intervalTime = now - lastRPos.getTime();
+
+                RPosition currentRP = new RPosition(acceleration,
+                        lastRPos.getV(), now, intervalTime);
+                MapActivity.this.updateValues(MapActivity.this.emap, currentRP);
+            } catch (Exception e) {
+                // TODO: handle exception
+                Toast.makeText(this, "test + " + e.getMessage(), Toast.LENGTH_LONG).show();
+                // throw e;
+                e.printStackTrace();
+            }
+            break;
         }
-        
+
     }
-    
+
     @Override
     protected void onStop() {
         Log.d(TAG, "OnStop");
@@ -191,9 +228,7 @@ public class MapActivity extends Activity {// implements
         } else {
             connectToService();
         }
-//        mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
-//        mSensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_UI);
-      
+
     }
 
     @Override
@@ -202,7 +237,7 @@ public class MapActivity extends Activity {// implements
         super.onPause();
 
         stopService(new Intent(getBaseContext(), WifiService.class));
-//        mSensorManager.unregisterListener(this);
+        // mSensorManager.unregisterListener(this);
     }
 
     @Override
@@ -212,7 +247,6 @@ public class MapActivity extends Activity {// implements
         super.onDestroy();
 
     }
-
 
     private void connectToService() {
         Log.d(TAG, "connectToService");
@@ -232,18 +266,20 @@ public class MapActivity extends Activity {// implements
         });
     }
 
-    public void updateValues(EMap emap) {
+    public void updateValues(EMap emap, RPosition currentRP) {
         try {
 
             Position defaultPos = new Position(0, 0);
 
             String jsonLastPosString = sharedPref.getString(
-                    com.kiss.config.Constants.LAST_POSITION_STRING_KEY,
+
+            com.kiss.config.Constants.LAST_POSITION_STRING_KEY,
                     defaultPos.toJSon());
 
             Position lastPos = new Position(jsonLastPosString);
 
-            Position currentPos = MMap.getCurrentPoint(emap, lastPos);
+            Position currentPos = MMap
+                    .getCurrentPoint(emap, lastPos, currentRP);
 
             if (currentPos != null) {
                 MapActivity.this.ax.setText("X: " + currentPos.x);
@@ -256,9 +292,13 @@ public class MapActivity extends Activity {// implements
                 point.setVisibility(1);
 
                 point.setLayoutParams(lp);
-                currentPos.setTime((new Date()).getTime());
+                currentPos.setTime(currentRP.getTime());
+
                 editor.putString(
                         com.kiss.config.Constants.LAST_POSITION_STRING_KEY,
+                        currentRP.toJSon());
+                editor.putString(
+                        com.kiss.config.Constants.LAST_RPOSITION_STRING_KEY,
                         currentPos.toJSon());
                 editor.commit();
             }

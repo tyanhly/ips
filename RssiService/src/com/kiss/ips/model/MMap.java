@@ -1,12 +1,8 @@
 package com.kiss.ips.model;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import android.net.wifi.ScanResult;
 
@@ -15,6 +11,7 @@ import com.estimote.sdk.Utils;
 import com.kiss.ips.entity.EMap;
 import com.kiss.ips.entity.Ibeacon;
 import com.kiss.ips.entity.Position;
+import com.kiss.ips.entity.RPosition;
 import com.kiss.ips.entity.Wifi;
 import com.kiss.math.CircleEquation;
 import com.kiss.math.MathUtil;
@@ -125,128 +122,19 @@ public class MMap {
         return Math.round(distance);
     }
 
-    public static Position getCurrentPoint(EMap emap, Position lastPos)
-            throws Exception {
-        if (emap.currentIbeacons.size() > 0) {
-            return getCurrentPointByIbeacon(emap, lastPos);
-        } else {
-            return getCurrentPointByWifis(emap);
-        }
-    }
-
-    public static Position getCurrentPointByWifis(EMap emap) throws Exception {
-
-        Set<Map.Entry<String, Wifi>> wifiSet = emap.currentWifis.entrySet();
-        Iterator<Map.Entry<String, Wifi>> iterator = wifiSet.iterator();
-        int wifiSize = wifiSet.size();
-
-        if (wifiSize == 0) {
-            return null;
-        } else if (wifiSize == 1) {
-            Map.Entry<String, Wifi> en = (Map.Entry<String, Wifi>) iterator
-                    .next();
-            return en.getValue().getPos();
-        } else if (wifiSize == 2) {
-            Map.Entry<String, Wifi> en1 = (Map.Entry<String, Wifi>) iterator
-                    .next();
-            Map.Entry<String, Wifi> en2 = (Map.Entry<String, Wifi>) iterator
-                    .next();
-            return getMidPosition(en1.getValue().exportToCircleEquation(), en2
-                    .getValue().exportToCircleEquation());
-        } else {
-            Map.Entry<String, Wifi> en1 = (Map.Entry<String, Wifi>) iterator
-                    .next();
-            List<Position> ps = new ArrayList<Position>();
-            int c = 1;
-            while (iterator.hasNext()) {
-                Map.Entry<String, Wifi> tmpEn = (Map.Entry<String, Wifi>) iterator
-                        .next();
-                if (c > 2) {
-                    break;
-                } else {
-                    Position p = getMidPosition(en1.getValue()
-                            .exportToCircleEquation(), tmpEn.getValue()
-                            .exportToCircleEquation());
-                    if (p.x < 0 || p.y < 0) {
-                        continue;
-                    } else {
-                        ps.add(p);
-                        c++;
-                    }
-                }
-            }
-            long vx = 0;
-            long vy = 0;
-            int i = 0;
-            for (Position pos : ps) {
-                vx += pos.x;
-                vy += pos.y;
-                i++;
-            }
-            return new Position((long) vx / i, (long) vy / i);
-        }
+    public static Position getCurrentPoint(EMap emap, Position lastPos,
+            RPosition currentRP) throws Exception {
+        return getCurrentPointByIbeacon(emap, lastPos, currentRP);
 
     }
 
-    public static Position getCurrentPointByIbeacon(EMap emap, Position lastPos)
-            throws Exception {
-
-        Set<Entry<String, Ibeacon>> ibeaconSet = emap.currentIbeacons
-                .entrySet();
-        Iterator<Entry<String, Ibeacon>> iterator = ibeaconSet.iterator();
-        int ibeaconSize = ibeaconSet.size();
-        if (ibeaconSize == 1) {
-            return iterator.next().getValue().getPos();
-        } else {
-
-            List<Position> ps = new ArrayList<Position>();
-            CircleEquation userCircle = lastPos
-                    .getCircleEquationByMilliSeconds();
-
-            int c = 1;
-            while (iterator.hasNext()) {
-
-                CircleEquation c1 = iterator.next().getValue()
-                        .exportToCircleEquation();
-                
-                Iterator<Entry<String, Ibeacon>> iterator1 = ibeaconSet
-                        .iterator();
-                
-                for (int i = 0; i < c; i++)
-                    iterator1.next();
-
-                int cc=1;
-                while (iterator1.hasNext()) {
-                    CircleEquation c2 = iterator1.next().getValue()
-                            .exportToCircleEquation();
-                    if (cc > 2) {
-                        break;
-                    } else {
-                        Position p = getMidPosition(c1, c2);
-                        ps.add(p);
-                        cc++;
-                    }
-                }
-                if (c > 2) {
-                    break;
-                }
-                c++;
-            }
-            long vx = 0;
-            long vy = 0;
-            int i = 0;
-            for (Position p : ps) {
-                if (userCircle.getInOutOn(p) > -1) {
-                    vx += p.x;
-                    vy += p.y;
-                    i++;
-                }
-            }
-            if (i > 0) {
-                return new Position((long) vx / i, (long) vy / i);
-            }
-            return ps.get(0);
-        }
+    public static Position getCurrentPointByIbeacon(EMap emap,
+            Position lastPos, RPosition currentRP) throws Exception {
+        long intervalTime = currentRP.getTime() - lastPos.getTime();
+        Position currentPos = new Position(lastPos.x
+                + currentRP.getOrientationX(intervalTime), lastPos.y
+                + currentRP.getOrientationX(intervalTime), currentRP.getTime());
+        return currentPos;
 
     }
 
