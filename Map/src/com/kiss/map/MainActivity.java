@@ -48,7 +48,7 @@ public class MainActivity extends Activity {
         Sensor sensor = sensorService.getDefaultSensor(sensorType);
         sensors.add(sensor);
         sensorService.registerListener(mySensorEventListener, sensor,
-                SensorManager.SENSOR_DELAY_NORMAL);
+                SensorManager.SENSOR_DELAY_FASTEST);
     }
 
     private final SensorEventListener mySensorEventListener = new SensorEventListener() {
