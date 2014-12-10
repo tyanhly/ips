@@ -63,8 +63,9 @@ public class MyView extends View {
 
     
     protected void _drawPositions(Canvas canvas){
-        for(int d=256*10-1, i = movingData.size()-1; i >= 0 ; i--, d--){
-            int redColor = Color.rgb(d%256, 100-d/256, 100 -d/256);
+        
+        for(int d=0, i = 0; i <movingData.size() ; i++, d++){
+            int redColor = Color.rgb(d%256, d/256, d/256);
             _drawPos(canvas, movingData.get(i), redColor);
         }
     }
