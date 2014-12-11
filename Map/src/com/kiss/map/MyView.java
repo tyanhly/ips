@@ -2,10 +2,9 @@ package com.kiss.map;
 
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import com.kiss.config.Constants;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -15,6 +14,8 @@ import android.hardware.SensorManager;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+
+import com.kiss.config.Constants;
 
 public class MyView extends View {
 
@@ -54,7 +55,8 @@ public class MyView extends View {
 
     DecimalFormat d = new DecimalFormat("#.##");
 
-    private MovingData movingData;
+    private LimitedArray<Position> posListData;
+    private ArrayList<Moving> movingListData;
 
     public MyView(Context context) {
         super(context);
@@ -92,7 +94,8 @@ public class MyView extends View {
     }
 
     private void _viewInit() {
-        movingData = new MovingData(Constants.MOVING_SAMPLE_TOTAL);
+        posListData = new LimitedArray<Position>(Constants.POS_SAMPLE_TOTAL);
+        movingListData = new LimitedArray<Moving>(Constants.MOVING_SAMPLE_TOTAL);
         bpaint = new Paint();
         bpaint.setStyle(Paint.Style.FILL);
         bpaint.setColor(Color.WHITE);
@@ -144,6 +147,8 @@ public class MyView extends View {
                 this.earthAccel[0], this.earthAccel[1], this.earthAccel[2]),
                 30, screenHeight - 30, txtPaint);
 
+        canvas.drawText(String.format("Moving: %d, Pos: %d",movingListData.size(),posListData.size()),
+                screenWidth - 330, screenHeight - 30, txtPaint);
     }
 
     protected void _drawPos(Canvas canvas, Position p, int redColor) {
@@ -155,9 +160,9 @@ public class MyView extends View {
 
     protected void _drawPositions(Canvas canvas) {
 
-        for (int d = 0, i = 0; i < movingData.size(); i++, d++) {
+        for (int d = 0, i = 0; i < posListData.size(); i++, d++) {
             int redColor = Color.rgb(d % 256, d / 256, d / 256);
-            _drawPos(canvas, movingData.get(i), redColor);
+            _drawPos(canvas, posListData.get(i), redColor);
         }
     }
 
@@ -217,7 +222,7 @@ public class MyView extends View {
         final int action = ev.getAction();
         switch (action & MotionEvent.ACTION_MASK) {
         case MotionEvent.ACTION_DOWN: {
-            movingData.clear();
+            posListData.clear();
             invalidate();
         }
         }
@@ -226,7 +231,7 @@ public class MyView extends View {
     }
 
     public void addPos(Position p) {
-        movingData.add(p);
+        posListData.add(p);
     }
 
     // public void invalidate() {
@@ -234,26 +239,23 @@ public class MyView extends View {
     // }
 
     public Position getLastMovingData() {
-        if (movingData.isEmpty()) {
-            return new Position(0, 0, timestamp);
+        if (posListData.isEmpty()) {
+            return new Position(0, 0,  System.nanoTime());
         }
-        return movingData.get(movingData.size() - 1);
+        return posListData.get(posListData.size() - 1);
     }
 
     public void setMag(float[] mag) {
-        Log.d("TungTest", "setMag");
         System.arraycopy(mag, 0, this.magnet, 0, 3);
     }
 
     public void setGyro(float[] gyro) {
-        Log.d("TungTest", "setGyro");
         System.arraycopy(gyro, 0, this.gyro, 0, 3);
         gyroFunction(gyro);
     }
 
     public void setAccel(float[] accel) {
 
-        Log.d("TungTest", "setAccel");
         System.arraycopy(accel, 0, this.accel, 0, 3);
         calculateAccMagOrientation();
     }
@@ -272,7 +274,6 @@ public class MyView extends View {
 
     public void gyroFunction(float[] gyro) {
 
-        Log.d("TungTest", "gyroFunction");
         if (accMagOrientation == null)
             return;
 
@@ -282,10 +283,10 @@ public class MyView extends View {
             float[] test = new float[3];
             SensorManager.getOrientation(initMatrix, test);
 
-            Log.d("MatrixTest", String.format(
-                    "(%.3f,%.3f,%.3f) == (%.3f,%.3f,%.3f)",
-                    accMagOrientation[0], accMagOrientation[1],
-                    accMagOrientation[2], test[0], test[1], test[2]));
+//            Log.d("MatrixTest", String.format(
+//                    "(%.3f,%.3f,%.3f) == (%.3f,%.3f,%.3f)",
+//                    accMagOrientation[0], accMagOrientation[1],
+//                    accMagOrientation[2], test[0], test[1], test[2]));
 
             gyroMatrix = matrixMultiplication3x3(gyroMatrix, initMatrix);
             initState = false;
@@ -308,16 +309,9 @@ public class MyView extends View {
         gyroMatrix = matrixMultiplication3x3(gyroMatrix, deltaMatrix);
 
         SensorManager.getOrientation(gyroMatrix, gyroOrientation);
-        Log.d("TungTest", "movingData:" + movingData.size());
-        // Add next position
-        addNextPosition();
+        Log.d("TungTest", "movingData:" + posListData.size());
+       
 
-    }
-
-    private void addNextPosition() {
-        Position pos = MyView.this.getLastMovingData();
-        pos.setEarthAccels(earthAccel);
-        MyView.this.addPos(pos.getNextPosition(timestamp));
     }
 
     private float[] get3x3RotationMatrixFromEuler(float[] o) {
@@ -474,9 +468,19 @@ public class MyView extends View {
             accel[3] = 0;
             android.opengl.Matrix.multiplyMV(earthAccel, 0,
                     rotationMatrixInverse, 0, accel, 0);
-            /**
-             * CODO
-             **/
+            
+            movingListData.add(new Moving(earthAccel, System.nanoTime()));
+            
+            Log.d("EarthAccel",String.format("%.3f, %.3f, %.3f", earthAccel[0], earthAccel[1], earthAccel[2]));
+            
+            // Add next position
+            if(movingListData.size()==Constants.MOVING_SAMPLE_TOTAL){
+
+                Position pos = MyView.this.getLastMovingData();
+                pos.setMovings(MyView.this.movingListData);
+                MyView.this.addPos(pos.getNextPosition( System.nanoTime()));
+                MyView.this.movingListData.clear();
+            }
         }
     }
 }

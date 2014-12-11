@@ -1,5 +1,7 @@
 package com.kiss.map;
 
+import java.util.ArrayList;
+
 import com.kiss.config.Constants;
 
 public class Position {
@@ -7,8 +9,16 @@ public class Position {
     public int y;
     public long time;
     public float[] v0 = new float[] { 0.0f, 0.0f, 0.0f }; // unit is m/s
-    public float[] earthAccels = new float[] { 0.0f, 0.0f, 0.0f }; // unit is m/s^2
+    public ArrayList<Moving> movings = new ArrayList<Moving>(); // unit is m/s^2
     public static final int radius = 10;
+
+    public ArrayList<Moving> getMovings() {
+        return movings;
+    }
+
+    public void setMovings(ArrayList<Moving> movings) {
+        this.movings = movings;
+    }
 
     public Position(int x, int y) {
         this.x = x;
@@ -29,44 +39,67 @@ public class Position {
         this.v0 = v0;
     }
 
-    public float[] getV(long intervalTime) {
-        return new float[] { earthAccels[0] * intervalTime * Constants.NS2S,
-                earthAccels[1] * intervalTime * Constants.NS2S,
-                earthAccels[2] * intervalTime * Constants.NS2S };
+    public float[] getV() {
+        return _getV();
     }
 
+    public float[] _getV() {
+        float[] tmpV0 = new float[3];
+        System.arraycopy(this.v0, 0, tmpV0, 0, 3);
+        long tmpTime = this.time;
+        for (int i = 0; i < movings.size(); i++) {
+            float interval = (movings.get(i).time - tmpTime) * Constants.NS2S;
+            tmpV0[0] = tmpV0[0] + this.movings.get(i).a[0] * interval;
+            tmpV0[1] = tmpV0[1] + this.movings.get(i).a[1] * interval;
+            tmpV0[2] = tmpV0[2] + this.movings.get(i).a[2] * interval;
+            tmpTime = movings.get(i).time;
+        }
+        return tmpV0;
+    }
+
+    
     public Position getNextPosition(long curTime) {
-        long intervalTime = curTime - this.time;
-        return new Position(this.x + getOrientationX(intervalTime), this.y
-                + getOrientationY(intervalTime), curTime, getV(intervalTime));
+        return new Position(this.x + getOrientationX(), this.y
+                + getOrientationY(), curTime, getV());
     }
 
     public double getDistance(long intervalTime) {
-        double x = _getOrientationX(intervalTime);
-        double y = _getOrientationY(intervalTime);
+        double x = _getOrientationX();
+        double y = _getOrientationY();
 
         return Math.sqrt(x * x + y * y);
     }
 
-    public double _getOrientationX(long intervalTime) {
-        double x = (v0[0] + earthAccels[0] * intervalTime * Constants.NS2S) * intervalTime
-                * Constants.NS2S;
-
-        return x * Constants.PIXEL_ON_METER;
+    public double _getOrientationX() {
+        double tmpS = 0;
+        double tmpV = this.v0[0];
+        long tmpTime = this.time;
+        for (int i = 0; i < movings.size(); i++) {
+            double interval = (movings.get(i).time - tmpTime) * Constants.NS2S;
+            tmpS += (tmpV + this.movings.get(i).a[0] * interval / 2) * interval;
+            tmpTime = movings.get(i).time;
+        }
+        return tmpS * Constants.PIXEL_ON_METER;
     }
 
-    public int getOrientationX(long intervalTime) {
-        return (int)Math.round(_getOrientationX(intervalTime));
+    public int getOrientationX() {
+        return (int) Math.round(_getOrientationX());
     }
 
-    public double _getOrientationY(long intervalTime) {
-        double y = (v0[1] + earthAccels[1] * intervalTime * Constants.NS2S) * intervalTime
-                * Constants.NS2S;
-        return y * Constants.PIXEL_ON_METER;
+    public double _getOrientationY() {
+        double tmpS = 0;
+        double tmpV = this.v0[1];
+        long tmpTime = this.time;
+        for (int i = 0; i < movings.size(); i++) {
+            double interval = (movings.get(i).time - tmpTime) * Constants.NS2S;
+            tmpS += (tmpV + this.movings.get(i).a[1] * interval / 2) * interval;
+            tmpTime = movings.get(i).time;
+        }
+        return tmpS * Constants.PIXEL_ON_METER;
     }
 
-    public int getOrientationY(long intervalTime) {
-        return (int) Math.round(_getOrientationY(intervalTime));
+    public int getOrientationY() {
+        return (int) Math.round(_getOrientationY());
     }
 
     public int getX() {
@@ -99,14 +132,6 @@ public class Position {
 
     public void setV0(float[] v0) {
         this.v0 = v0;
-    }
-
-    public float[] getEarthAccels() {
-        return earthAccels;
-    }
-
-    public void setEarthAccels(float[] accels) {
-        this.earthAccels = accels;
     }
 
     public static int getRadius() {
