@@ -9,7 +9,6 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 
 @SuppressLint("InlinedApi")
 public class MainActivity extends Activity implements SensorEventListener {

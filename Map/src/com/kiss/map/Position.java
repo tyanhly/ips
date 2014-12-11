@@ -1,7 +1,5 @@
 package com.kiss.map;
 
-import android.text.style.TtsSpan.DecimalBuilder;
-
 import com.kiss.config.Constants;
 
 public class Position {

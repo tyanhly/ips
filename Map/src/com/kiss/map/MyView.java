@@ -122,13 +122,27 @@ public class MyView extends View {
         _drawCoordinate(canvas);
         // _drawStartPoint(canvas);
         _drawPositions(canvas);
-        _drawNewestPosition(canvas);
+        _drawDebugInformation(canvas);
     }
 
-    protected void _drawNewestPosition(Canvas canvas) {
+    protected void _drawDebugInformation(Canvas canvas) {
         Position p = getLastMovingData();
 
-        canvas.drawText(String.format("x=%d\ny=%d", p.x, p.y), 30, 30, txtPaint);
+        canvas.drawText(String.format("x=%d;y=%d", p.x, p.y), 30, 30, txtPaint);
+        
+        canvas.drawText(String.format("Accel: %.3f;%.3f;%.3f", this.accel[0],
+                this.accel[1], this.accel[2]), 30, screenHeight - 150, txtPaint);
+        
+        canvas.drawText(String.format("Gyros: %.3f;%.3f;%.3f", this.gyro[0],
+                this.gyro[1], this.gyro[2]), 30, screenHeight - 110, txtPaint);
+        
+        canvas.drawText(String.format("accMagOrientation: %.3f;%.3f;%.3f",
+                this.accMagOrientation[0], this.accMagOrientation[1],
+                this.accMagOrientation[2]), 30, screenHeight - 70, txtPaint);
+        
+        canvas.drawText(String.format("earthAccel: %.3f;%.3f;%.3f",
+                this.earthAccel[0], this.earthAccel[1], this.earthAccel[2]),
+                30, screenHeight - 30, txtPaint);
 
     }
 
@@ -136,6 +150,7 @@ public class MyView extends View {
 
         ppaint.setColor(redColor);
         canvas.drawCircle(toRX(p.x), toRY(p.y), Position.radius, ppaint);
+
     }
 
     protected void _drawPositions(Canvas canvas) {
@@ -232,6 +247,7 @@ public class MyView extends View {
 
     public void setGyro(float[] gyro) {
         Log.d("TungTest", "setGyro");
+        System.arraycopy(gyro, 0, this.gyro, 0, 3);
         gyroFunction(gyro);
     }
 
@@ -247,7 +263,7 @@ public class MyView extends View {
 
         if (magnet == null)
             return;
-        
+
         if (SensorManager
                 .getRotationMatrix(rotationMatrix, null, accel, magnet)) {
             SensorManager.getOrientation(rotationMatrix, accMagOrientation);
@@ -278,7 +294,6 @@ public class MyView extends View {
         float[] deltaVector = new float[4];
         if (timestamp != 0) {
             final float dT = (System.nanoTime() - timestamp) * Constants.NS2S;
-            System.arraycopy(this.gyro, 0, gyro, 0, 3);
             getRotationVectorFromGyro(this.gyro, deltaVector, dT / 2.0f);
         }
 
@@ -433,12 +448,30 @@ public class MyView extends View {
              **/
             float[] rotationMatrixInverse = new float[16]; // 4x4
             float[] rotationMatrix = new float[16]; // 4x4
-            SensorManager.getRotationMatrixFromVector(rotationMatrix,
-                    fusedOrientation);
+            //SensorManager.getRotationMatrixFromVector(rotationMatrix,
+            //        fusedOrientation);
+            
+            rotationMatrix[0] = gyroMatrix[0];
+            rotationMatrix[1] = gyroMatrix[1];
+            rotationMatrix[2] = gyroMatrix[2];
+            rotationMatrix[3] = 0;
+            rotationMatrix[4] = gyroMatrix[3];
+            rotationMatrix[5] = gyroMatrix[4];
+            rotationMatrix[6] = gyroMatrix[5];
+            rotationMatrix[7] = 0;
+            rotationMatrix[8] = gyroMatrix[6];
+            rotationMatrix[9] = gyroMatrix[7];
+            rotationMatrix[10] = gyroMatrix[8];
+            rotationMatrix[11] = 0;
+            rotationMatrix[12] = 0;
+            rotationMatrix[13] = 0;
+            rotationMatrix[14] = 0;
+            rotationMatrix[15] = 1;
 
             // android.opengl like 4x4
             android.opengl.Matrix.invertM(rotationMatrixInverse, 0,
                     rotationMatrix, 0);
+            accel[3] = 0;
             android.opengl.Matrix.multiplyMV(earthAccel, 0,
                     rotationMatrixInverse, 0, accel, 0);
             /**
