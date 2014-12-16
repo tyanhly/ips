@@ -1,0 +1,70 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.example.sensordemo.MainActivity" >
+
+    <Button
+        android:id="@+id/start"
+        android:layout_width="200px"
+        android:layout_height="wrap_content"
+        android:onClick="startTracking"
+        android:text="start" />
+
+    <Button
+        android:id="@+id/stop"
+        android:layout_width="200px"
+        android:layout_height="wrap_content"
+        android:onClick="stopTracking"
+        android:text="stop" />
+
+    <TextView
+        android:id="@+id/accel"
+        android:layout_width="match_parent"
+        android:layout_height="300px"
+        android:text="Accell: " />
+
+    <TextView
+        android:id="@+id/gyrosu"
+        android:layout_width="match_parent"
+        android:layout_height="300px"
+        android:text="Gyros_U: " />
+
+    <TextView
+        android:id="@+id/magu"
+        android:layout_width="match_parent"
+        android:layout_height="300px"
+        android:text="Magu: " />
+
+    <TextView
+        android:id="@+id/mag"
+        android:layout_width="match_parent"
+        android:layout_height="300px"
+        android:text="Mag: "
+        android:visibility="invisible" />
+
+    <TextView
+        android:id="@+id/accell"
+        android:layout_width="match_parent"
+        android:layout_height="300px"
+        android:text="Accel: "
+        android:visibility="invisible" />
+
+    <TextView
+        android:id="@+id/gyros"
+        android:layout_width="match_parent"
+        android:layout_height="300px"
+        android:text="Gyros: "
+        android:visibility="invisible"/>
+
+    <Button
+        android:id="@+id/send"
+        android:layout_width="200px"
+        android:layout_height="wrap_content"
+        android:onClick="onClickSend"
+        android:text="sendData"
+        android:visibility="invisible"/>
+ -->
+
+</LinearLayout>

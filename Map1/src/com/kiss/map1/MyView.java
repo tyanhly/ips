@@ -215,6 +215,7 @@ public class MyView extends View {
     }
 
     public void cal() {
+        
         float tmp=0, current=0;
         float min = getEsMinOfTopValue();
         float stepConstant = 0.4f * Constants.PIXEL_ON_METER;
@@ -233,6 +234,8 @@ public class MyView extends View {
                 this.posListData.add(new Position(0, Math.round(p.y
                         + stepConstant)));
             }
+            
+            
             tmp = current;
             this.accel.remove(i);
 

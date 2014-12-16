@@ -1,6 +1,7 @@
 <?php
 #die('dfdf:');
-$file = "/tmp/" . $_GET['file'] . ".txt";
+$t= intval(time()/60/5);
+$file = "/tmp/" . $_GET['file'] . $t . ".txt" ;
 
 
 #echo $file;die;
