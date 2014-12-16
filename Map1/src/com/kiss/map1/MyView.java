@@ -3,7 +3,6 @@ package com.kiss.map1;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -82,7 +81,9 @@ public class MyView extends View {
         screenWidth = getWidth();
         screenHeight = getHeight();
         xRoot = screenWidth / 2;
-        yRoot = screenHeight / 2;
+//        yRoot = screenHeight / 2;
+//        xRoot = 0;
+        yRoot = 0;
         canvas.drawPaint(bpaint);
         _drawCoordinate(canvas);
         // _drawStartPoint(canvas);
@@ -200,48 +201,49 @@ public class MyView extends View {
     }
 
     private float getEsMinOfTopValue() {
-        float targetNumberRate = (1224 - 50) / 1224;
-         @SuppressWarnings("unchecked")
-         ArrayList<Float> tmpArr = (ArrayList<Float>) this.accel.clone();
-         Collections.sort(tmpArr);
-         int estTargetAmount = Math.round(targetNumberRate * tmpArr.size());
-        
-         if(tmpArr.get(estTargetAmount)<10.2){
-             return 10.2f;
-         }
-         return tmpArr.get(estTargetAmount);
+//        float targetNumberRate = (1224 - 50) / 1224;
+//         @SuppressWarnings("unchecked")
+//         ArrayList<Float> tmpArr = (ArrayList<Float>) this.accel.clone();
+//         Collections.sort(tmpArr);
+//         int estTargetAmount = Math.round(targetNumberRate * tmpArr.size());
+//        
+//         if(tmpArr.get(estTargetAmount)<10.1){
+//             return 10.1f;
+//         }
+//         return tmpArr.get(estTargetAmount);
+        return 0.4f;
     }
 
     public void cal() {
-        float tmp;
+        float tmp=0, current=0;
         float min = getEsMinOfTopValue();
         float stepConstant = 0.4f * Constants.PIXEL_ON_METER;
         int i = 0;
-        while ((this.accel.size() - 5) / 5 > 0) {
-
-            tmp = (this.accel.get(i).floatValue()
-                    + this.accel.get(i + 1).floatValue()
-                    + this.accel.get(i + 2).floatValue()
-                    + this.accel.get(i + 3).floatValue()
-                    + this.accel.get(i + 4).floatValue()) / 5;
-            if (tmp > min) {
+        while ((this.accel.size()-5) / 5 > 0) {
+            float a0 = this.accel.get(0);
+            float a1 = this.accel.get(1);
+            float a2 = this.accel.get(2);
+            float a3 = this.accel.get(3);
+            float a4 = this.accel.get(4);
+            
+            current = (a0+a1+a2+a3+a4) / 5 -9.8f;
+            
+            if(tmp<min && current > min && a0>10.1f){
                 Position p = this.getLastMovingData();
                 this.posListData.add(new Position(0, Math.round(p.y
                         + stepConstant)));
             }
-
+            tmp = current;
             this.accel.remove(i);
-            this.accel.remove(i + 1);
-            this.accel.remove(i + 2);
-            this.accel.remove(i + 3);
-            this.accel.remove(i + 4);
+
         }
 
     }
 
     class calculateFusedOrientationTask extends TimerTask {
         public void run() {
-            MyView.this.cal();
+            if(MyView.this.accel.size()>10)
+                MyView.this.cal();
         }
     }
 }
