@@ -49,7 +49,7 @@ public class MyView extends View {
     private float[] rotationMatrix = new float[9];
 
     private long timestamp = 0;
-    private boolean initState = true;
+    private int initState = 2;
 
     private Timer fuseTimer = new Timer();
 
@@ -85,8 +85,8 @@ public class MyView extends View {
         gyroMatrix[6] = 0.0f;
         gyroMatrix[7] = 0.0f;
         gyroMatrix[8] = 1.0f;
-        fuseTimer.scheduleAtFixedRate(new calculateFusedOrientationTask(),
-                2000, Constants.THREAD_UPDATE_VECTOR_TIME_CONSTANT);
+//        fuseTimer.scheduleAtFixedRate(new calculateFusedOrientationTask(),
+//                2000, Constants.THREAD_UPDATE_VECTOR_TIME_CONSTANT);
         // GUI stuff
         d.setRoundingMode(RoundingMode.HALF_UP);
         d.setMaximumFractionDigits(3);
@@ -246,6 +246,7 @@ public class MyView extends View {
     }
 
     public void setMag(float[] mag) {
+        if(initState!=0) initState--;
         System.arraycopy(mag, 0, this.magnet, 0, 3);
     }
 
@@ -255,7 +256,7 @@ public class MyView extends View {
     }
 
     public void setAccel(float[] accel) {
-
+        if(initState!=0) initState--;
         System.arraycopy(accel, 0, this.accel, 0, 3);
         calculateAccMagOrientation();
     }
@@ -277,7 +278,7 @@ public class MyView extends View {
         if (accMagOrientation == null)
             return;
 
-        if (initState) {
+        if (initState==0) {
             float[] initMatrix = new float[9];
             initMatrix = get3x3RotationMatrixFromEuler(accMagOrientation);
             float[] test = new float[3];
@@ -289,7 +290,6 @@ public class MyView extends View {
 //                    accMagOrientation[2], test[0], test[1], test[2]));
 
             gyroMatrix = matrixMultiplication3x3(gyroMatrix, initMatrix);
-            initState = false;
         }
 
         float[] deltaVector = new float[4];
@@ -405,82 +405,90 @@ public class MyView extends View {
         return result;
     }
 
+    public void invalidate(){
+        calculateFusedOrientation();
+        super.invalidate();
+    }
+    
+    public void calculateFusedOrientation(){
+        final float oneMinusCoeff = 1.0f - Constants.FILTER_COEFFICIENT;
+        final double halfPi = -0.5 * Math.PI;
+        final double twoPi = 2 * Math.PI;
+
+        for (int i = 0; i < 3; i++) {
+            if (gyroOrientation[i] < halfPi && accMagOrientation[i] > 0.0) {
+                fusedOrientation[i] = (float) (Constants.FILTER_COEFFICIENT
+                        * (gyroOrientation[i] + twoPi) + oneMinusCoeff
+                        * accMagOrientation[i]);
+                fusedOrientation[i] -= (fusedOrientation[i] > Math.PI) ? twoPi
+                        : 0;
+            } else if (accMagOrientation[i] < halfPi
+                    && gyroOrientation[i] > 0.0) {
+                fusedOrientation[i] = (float) (Constants.FILTER_COEFFICIENT
+                        * gyroOrientation[i] + oneMinusCoeff
+                        * (accMagOrientation[i] + twoPi));
+                fusedOrientation[i] -= (fusedOrientation[i] > Math.PI) ? twoPi
+                        : 0;
+            } else {
+                fusedOrientation[i] = Constants.FILTER_COEFFICIENT
+                        * gyroOrientation[i] + oneMinusCoeff
+                        * accMagOrientation[i];
+            }
+        }
+
+        gyroMatrix = get3x3RotationMatrixFromEuler(fusedOrientation); // 3x3
+        System.arraycopy(fusedOrientation, 0, gyroOrientation, 0, 3);
+
+        // fusedOrientation euler angle representation
+
+        /**
+         * CODO
+         **/
+        float[] rotationMatrixInverse = new float[16]; // 4x4
+        float[] rotationMatrix = new float[16]; // 4x4
+        //SensorManager.getRotationMatrixFromVector(rotationMatrix,
+        //        fusedOrientation);
+        
+        rotationMatrix[0] = gyroMatrix[0];
+        rotationMatrix[1] = gyroMatrix[1];
+        rotationMatrix[2] = gyroMatrix[2];
+        rotationMatrix[3] = 0;
+        rotationMatrix[4] = gyroMatrix[3];
+        rotationMatrix[5] = gyroMatrix[4];
+        rotationMatrix[6] = gyroMatrix[5];
+        rotationMatrix[7] = 0;
+        rotationMatrix[8] = gyroMatrix[6];
+        rotationMatrix[9] = gyroMatrix[7];
+        rotationMatrix[10] = gyroMatrix[8];
+        rotationMatrix[11] = 0;
+        rotationMatrix[12] = 0;
+        rotationMatrix[13] = 0;
+        rotationMatrix[14] = 0;
+        rotationMatrix[15] = 1;
+
+        // android.opengl like 4x4
+        android.opengl.Matrix.invertM(rotationMatrixInverse, 0,
+                rotationMatrix, 0);
+        accel[3] = 0;
+        android.opengl.Matrix.multiplyMV(earthAccel, 0,
+                rotationMatrixInverse, 0, accel, 0);
+        
+        movingListData.add(new Moving(earthAccel, System.nanoTime()));
+        
+        Log.d("EarthAccel",String.format("%.3f, %.3f, %.3f", earthAccel[0], earthAccel[1], earthAccel[2]));
+        
+        // Add next position
+        if(movingListData.size()==Constants.MOVING_SAMPLE_TOTAL){
+
+            Position pos = MyView.this.getLastMovingData();
+            pos.setMovings(MyView.this.movingListData);
+            MyView.this.addPos(pos.getNextPosition( System.nanoTime()));
+            MyView.this.movingListData.clear();
+        }
+    }
     class calculateFusedOrientationTask extends TimerTask {
         public void run() {
-            final float oneMinusCoeff = 1.0f - Constants.FILTER_COEFFICIENT;
-            final double halfPi = -0.5 * Math.PI;
-            final double twoPi = 2 * Math.PI;
-
-            for (int i = 0; i < 3; i++) {
-                if (gyroOrientation[i] < halfPi && accMagOrientation[i] > 0.0) {
-                    fusedOrientation[i] = (float) (Constants.FILTER_COEFFICIENT
-                            * (gyroOrientation[i] + twoPi) + oneMinusCoeff
-                            * accMagOrientation[i]);
-                    fusedOrientation[i] -= (fusedOrientation[i] > Math.PI) ? twoPi
-                            : 0;
-                } else if (accMagOrientation[i] < halfPi
-                        && gyroOrientation[i] > 0.0) {
-                    fusedOrientation[i] = (float) (Constants.FILTER_COEFFICIENT
-                            * gyroOrientation[i] + oneMinusCoeff
-                            * (accMagOrientation[i] + twoPi));
-                    fusedOrientation[i] -= (fusedOrientation[i] > Math.PI) ? twoPi
-                            : 0;
-                } else {
-                    fusedOrientation[i] = Constants.FILTER_COEFFICIENT
-                            * gyroOrientation[i] + oneMinusCoeff
-                            * accMagOrientation[i];
-                }
-            }
-
-            gyroMatrix = get3x3RotationMatrixFromEuler(fusedOrientation); // 3x3
-            System.arraycopy(fusedOrientation, 0, gyroOrientation, 0, 3);
-
-            // fusedOrientation euler angle representation
-
-            /**
-             * CODO
-             **/
-            float[] rotationMatrixInverse = new float[16]; // 4x4
-            float[] rotationMatrix = new float[16]; // 4x4
-            //SensorManager.getRotationMatrixFromVector(rotationMatrix,
-            //        fusedOrientation);
-            
-            rotationMatrix[0] = gyroMatrix[0];
-            rotationMatrix[1] = gyroMatrix[1];
-            rotationMatrix[2] = gyroMatrix[2];
-            rotationMatrix[3] = 0;
-            rotationMatrix[4] = gyroMatrix[3];
-            rotationMatrix[5] = gyroMatrix[4];
-            rotationMatrix[6] = gyroMatrix[5];
-            rotationMatrix[7] = 0;
-            rotationMatrix[8] = gyroMatrix[6];
-            rotationMatrix[9] = gyroMatrix[7];
-            rotationMatrix[10] = gyroMatrix[8];
-            rotationMatrix[11] = 0;
-            rotationMatrix[12] = 0;
-            rotationMatrix[13] = 0;
-            rotationMatrix[14] = 0;
-            rotationMatrix[15] = 1;
-
-            // android.opengl like 4x4
-            android.opengl.Matrix.invertM(rotationMatrixInverse, 0,
-                    rotationMatrix, 0);
-            accel[3] = 0;
-            android.opengl.Matrix.multiplyMV(earthAccel, 0,
-                    rotationMatrixInverse, 0, accel, 0);
-            
-            movingListData.add(new Moving(earthAccel, System.nanoTime()));
-            
-            Log.d("EarthAccel",String.format("%.3f, %.3f, %.3f", earthAccel[0], earthAccel[1], earthAccel[2]));
-            
-            // Add next position
-            if(movingListData.size()==Constants.MOVING_SAMPLE_TOTAL){
-
-                Position pos = MyView.this.getLastMovingData();
-                pos.setMovings(MyView.this.movingListData);
-                MyView.this.addPos(pos.getNextPosition( System.nanoTime()));
-                MyView.this.movingListData.clear();
-            }
+            MyView.this.calculateFusedOrientation();
         }
     }
 }

@@ -39,11 +39,84 @@ public class Position {
         this.v0 = v0;
     }
 
-    public float[] getV() {
-        return _getV();
+    public Position getNextPosition(long curTime) {
+        return new Position(this.x + getOrientationX(), this.y
+                + getOrientationY(), curTime, getV());
     }
 
-    public float[] _getV() {
+    public double getDistance(long intervalTime) {
+        double x = _getOrientationXv2();
+        double y = _getOrientationYv2();
+
+        return Math.sqrt(x * x + y * y);
+    }
+
+    public float[] getV() {
+        return _getVv2();
+    }
+
+    public int getOrientationX() {
+        return (int) Math.round(_getOrientationXv2());
+    }
+
+
+    public int getOrientationY() {
+        return (int) Math.round(_getOrientationYv2());
+    }
+    public float[] _getVv1() {
+        float[] tmpV0 = new float[3];
+        float a0 = 0.0f, a1 = 0.0f, a2 = 0.0f;
+        for (int i = 0; i < movings.size(); i++) {
+            a0 += this.movings.get(i).a[0];
+            a1 += this.movings.get(i).a[2];
+            a2 += this.movings.get(i).a[1];
+        }
+
+        a0 = a0 / movings.size();
+        a1 = a1 / movings.size();
+        a2 = a2 / movings.size();
+        long interval = Math.round((this.time - movings.get(0).time)
+                * Constants.NS2S);
+        
+        tmpV0[0] = a0 * interval;
+        tmpV0[1] = a1 * interval;
+        tmpV0[2] = a2 * interval;
+        return tmpV0;
+    }
+    public double _getOrientationXv1() {
+        double tmpS = 0;
+        double tmpV = this.v0[0];
+
+        float a0 = 0.0f;
+        for (int i = 0; i < movings.size(); i++) {
+            a0 += this.movings.get(i).a[0];
+        }
+        a0 = a0 / movings.size();
+        long interval = Math.round((this.time - movings.get(0).time)
+                * Constants.NS2S);
+        tmpS = (tmpV * interval + 1 / 2 * a0 * a0 * interval)
+                * Constants.PIXEL_ON_METER;
+        return tmpS;
+    }
+
+    public double _getOrientationYv1() {
+        double tmpS = 0;
+        double tmpV = this.v0[1];
+
+        float a1 = 0.0f;
+        for (int i = 0; i < movings.size(); i++) {
+            a1 += this.movings.get(i).a[1];
+        }
+        a1 = a1 / movings.size();
+        long interval = Math.round((this.time - movings.get(0).time)
+                * Constants.NS2S);
+        tmpS = (tmpV * interval + 1 / 2 * a1 * a1 * interval)
+                * Constants.PIXEL_ON_METER;
+        return tmpS;
+    }
+
+
+    public float[] _getVv2() {
         float[] tmpV0 = new float[3];
         System.arraycopy(this.v0, 0, tmpV0, 0, 3);
         long tmpTime = this.time;
@@ -57,20 +130,7 @@ public class Position {
         return tmpV0;
     }
 
-    
-    public Position getNextPosition(long curTime) {
-        return new Position(this.x + getOrientationX(), this.y
-                + getOrientationY(), curTime, getV());
-    }
-
-    public double getDistance(long intervalTime) {
-        double x = _getOrientationX();
-        double y = _getOrientationY();
-
-        return Math.sqrt(x * x + y * y);
-    }
-
-    public double _getOrientationX() {
+    public double _getOrientationXv2() {
         double tmpS = 0;
         double tmpV = this.v0[0];
         long tmpTime = this.time;
@@ -82,11 +142,7 @@ public class Position {
         return tmpS * Constants.PIXEL_ON_METER;
     }
 
-    public int getOrientationX() {
-        return (int) Math.round(_getOrientationX());
-    }
-
-    public double _getOrientationY() {
+    public double _getOrientationYv2() {
         double tmpS = 0;
         double tmpV = this.v0[1];
         long tmpTime = this.time;
@@ -96,10 +152,6 @@ public class Position {
             tmpTime = movings.get(i).time;
         }
         return tmpS * Constants.PIXEL_ON_METER;
-    }
-
-    public int getOrientationY() {
-        return (int) Math.round(_getOrientationY());
     }
 
     public int getX() {
