@@ -661,7 +661,7 @@ public class SampleData {
     private void setStatusSet(int arrIntData[]) {
 
         for (int i = 0; i < arrIntData.length; i++) {
-            statusSet.add(new MEStatus(i, arrIntData));
+            statusSet.add(new MEStatus(i, arrIntData,0.0d));
         }
     }
 
@@ -672,21 +672,21 @@ public class SampleData {
     }
 
     private void setStatusProbability(int arrIntData[]) {
-        MEStatus tmpStatus = new MEStatus(0, arrIntData);
+        MEStatus tmpStatus = new MEStatus(0, arrIntData,0.0d);
         Float initValue = new Float(0.0f);
         for (MEStatus es : statusSet) {
 
             this.statusProbability.put(es, initValue);
         }
         for (int i = 1; i < arrIntData.length - 1; i++) {
-            MEStatus tmpStatus1 = new MEStatus(i, arrIntData);
+            MEStatus tmpStatus1 = new MEStatus(i, arrIntData,0.0d);
             if (tmpStatus.equals(tmpStatus1)) {
                 this.statusProbability
                         .put(tmpStatus,
                                 new Float(this.statusProbability.get(tmpStatus)
                                         .floatValue() + 1));
             }
-            tmpStatus = new MEStatus(i, arrIntData);
+            tmpStatus = new MEStatus(i, arrIntData,0.0d);
         }
         for (MEStatus es : statusSet) {
             this.statusProbability.put(es,
@@ -702,9 +702,9 @@ public class SampleData {
             this.transitionProbability.put(es, initValue);
         }
 
-        MEStatus currentStatus = new MEStatus(0, arrIntData);
+        MEStatus currentStatus = new MEStatus(0, arrIntData,0.0d);
         for (int i = 1; i < arrIntData.length - 1; i++) {
-            MEStatus tmpStatus = new MEStatus(i, arrIntData);
+            MEStatus tmpStatus = new MEStatus(i, arrIntData,0.0d);
             Map<MEStatus, Float> currentValue = this.transitionProbability
                     .get(currentStatus);
             if (currentValue.containsKey(tmpStatus)) {
@@ -744,7 +744,7 @@ public class SampleData {
         }
 
         for (int i = 0; i < arrIntData.length - 1; i++) {
-            MEStatus currentStatus = new MEStatus(i, arrIntData);
+            MEStatus currentStatus = new MEStatus(i, arrIntData,0.0d);
             this.emissionProbability.put(currentStatus,
                     getEstimateResult(currentStatus));
         }

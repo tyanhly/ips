@@ -12,10 +12,12 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.hardware.SensorEvent;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.goatstone.util.SensorFusion;
 import com.kiss.config.Constants;
 import com.kiss.markov.MEObservedData;
 import com.kiss.markov.MEStatus;
@@ -44,12 +46,18 @@ public class MyView extends View {
 
     DecimalFormat d = new DecimalFormat("#.##");
 
+    private SensorFusion sensorFusion;
+
     ArrayList<Integer> accelExecute = new ArrayList<Integer>();
     private Markov mk;
     private LimitedArray<Position> posListData;
 
     public MyView(Context context) {
         super(context);
+
+        sensorFusion = new SensorFusion();
+        sensorFusion.setMode(SensorFusion.Mode.FUSION);
+
         try {
             mk = new Markov();
         } catch (MarkovException e) {
@@ -97,9 +105,9 @@ public class MyView extends View {
         screenWidth = getWidth();
         screenHeight = getHeight();
         xRoot = screenWidth / 2;
-        // yRoot = screenHeight / 2;
+        yRoot = screenHeight / 2;
         // xRoot = 0;
-        yRoot = 0;
+        // yRoot = 0;
         canvas.drawPaint(bpaint);
         _drawCoordinate(canvas);
         // _drawStartPoint(canvas);
@@ -223,10 +231,24 @@ public class MyView extends View {
         return posListData.get(posListData.size() - 1);
     }
 
-    public void setAccel(float[] accel) {
-        int t = (int) Math.round(Math.sqrt(accel[0] * accel[0] + accel[1]
-                * accel[1] + accel[2] * accel[2]) * 10.0f);
+    public void setAccel(SensorEvent event) {
+
+        sensorFusion.setAccel(event.values);
+        sensorFusion.calculateAccMagOrientation();
+
+        int t = (int) Math.round(Math.sqrt(event.values[0] * event.values[0]
+                + event.values[1] * event.values[1] + event.values[2]
+                * event.values[2]) * 10.0f);
         this.accel.add(new Integer(t));
+    }
+
+    public void setGyro(SensorEvent event) {
+
+        sensorFusion.gyroFunction(event);
+    }
+
+    public void setMag(float[] mag) {
+        sensorFusion.setMagnet(mag);
     }
 
     public void calculate() {
@@ -234,24 +256,35 @@ public class MyView extends View {
         Log.d("StartEnd", "Start" + accelExecute.size());
         this.accel.clear();
 
-        float stepConstant = 0.4f * Constants.PIXEL_ON_METER;
-
-//        Log.d("Test", "Size1: " + accelExecute.size());
+        // Log.d("Test", "Size1: " + accelExecute.size());
         while (accelExecute.size() > Markov.MAX_LENGTH_OF_WINDS * 2) {
-            
-            MEStatus mes = new MEStatus(Markov.MAX_LENGTH_OF_WINDS, accelExecute);
+
+            MEStatus mes = new MEStatus(Markov.MAX_LENGTH_OF_WINDS,
+                    accelExecute, sensorFusion.getAzimuth());
             MEObservedData result = mk.getMEObservedData(mes);
             if (result.data == MEObservedData.ACCEL_UP) {
-                Position p = this.getLastMovingData();
-                this.posListData.add(new Position(0, Math.round(p.y
-                        + stepConstant)));
+
+                this.posListData.add(getEsPostion(mes));
                 Log.d("StartEnd", "add");
             }
             accelExecute.remove(0);
         }
-//        Log.d("Test", "Size2: " + accelExecute.size());
+        // Log.d("Test", "Size2: " + accelExecute.size());
 
         Log.d("StartEnd", "End" + accelExecute.size());
+    }
+
+    public Position getEsPostion(MEStatus mse) {
+
+        Position p = this.getLastMovingData();
+        float stepConstant = 0.4f * Constants.PIXEL_ON_METER;
+        double azimuth = mse.azimuth;
+        double rotationMap = 0;
+        double rotation = azimuth + rotationMap;
+        Position result = new Position((int) Math.round(p.x + stepConstant
+                * Math.sin(rotation)), (int) Math.round(p.y + stepConstant
+                * Math.cos(rotation)));
+        return result;
     }
 
     public void invalidate() {

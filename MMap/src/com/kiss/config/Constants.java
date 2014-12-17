@@ -11,7 +11,7 @@ public class Constants {
     public static final String LAST_RPOSITION_STRING_KEY = "LastRPositionKey";
 
     public static final int THREAD_UPDATE_STEP_MLS = 30;
-    public static final int PIXEL_ON_METER = 40;
+    public static final int PIXEL_ON_METER = 100;
     public static final int POS_SAMPLE_TOTAL = 100;
     public static final int MOVING_SAMPLE_TOTAL = 10;
     public static final float EPSILON = 0.000000001f;

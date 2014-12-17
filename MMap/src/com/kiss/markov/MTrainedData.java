@@ -32,7 +32,7 @@ public class MTrainedData {
                 if (mes.id > getMinOfTop()) {
                     Log.d("OutputData", "3");
                     float rateUp = 0.0f, rateOther = 0.0f;
-                    if (mes.before + mes.after > 15) {
+                    if (mes.before + mes.after > MAX_LENGTH_OF_WINDS-2 && mes.after >1 && mes.before >1 ) {
                         Log.d("OutputData", "4");
                         rateUp = 1.0f;
                         rateOther =0.0f;

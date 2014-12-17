@@ -1,5 +1,7 @@
 package com.kiss.mmap;
 
+import com.goatstone.util.SensorFusion;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -25,6 +27,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        
         myView = new MyView(this);
         setContentView(myView);
 
@@ -45,9 +48,15 @@ public class MainActivity extends Activity implements SensorEventListener {
     }
 
     public void registerSensorManagerListeners() {
-        
+
         sensorService.registerListener(this,
                 sensorService.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+                SensorManager.SENSOR_DELAY_FASTEST);
+        sensorService.registerListener(this,
+                sensorService.getDefaultSensor(Sensor.TYPE_GYROSCOPE),
+                SensorManager.SENSOR_DELAY_FASTEST);
+        sensorService.registerListener(this,
+                sensorService.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
                 SensorManager.SENSOR_DELAY_FASTEST);
         
 
@@ -81,10 +90,19 @@ public class MainActivity extends Activity implements SensorEventListener {
 //        Log.d("TungTest", "onSensorChanged");
         switch (event.sensor.getType()) {
 
+        case Sensor.TYPE_GYROSCOPE:
+            myView.setGyro(event);
+            break;
+
+        case Sensor.TYPE_MAGNETIC_FIELD:
+            myView.setMag(event.values);
+            break;
+            
         case Sensor.TYPE_ACCELEROMETER:
-            myView.setAccel(event.values);
+            myView.setAccel(event);
             break;
         }
+
     }
 
 }

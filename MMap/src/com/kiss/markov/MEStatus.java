@@ -8,15 +8,17 @@ public class MEStatus extends com.kiss.core.Object {
     public int id;
     public int before = 0;
     public int after = 0;
+    public double azimuth=0;
     public long time;
 
-    public MEStatus(int id, int before, int after) {
+    public MEStatus(int id, int before, int after, double azimuth) {
         this.id = id;
         this.before = before;
         this.after = after;
+        this.azimuth = azimuth;
     }
 
-    public MEStatus(int currentId, int[] arrIntData) {
+    public MEStatus(int currentId, int[] arrIntData,  double azimuth) {
         int length = arrIntData.length;
         int beforeTmp = 0;
         int afterTmp = 0;
@@ -42,9 +44,10 @@ public class MEStatus extends com.kiss.core.Object {
         this.id = arrIntData[currentId];
         this.before = beforeTmp;
         this.after = afterTmp;
+        this.azimuth = azimuth;
     }
 
-    public MEStatus(int currentId, List<Integer> acclList) {
+    public MEStatus(int currentId, List<Integer> acclList,  double azimuth) {
         int length = acclList.size();
         int beforeTmp = 0;
         int afterTmp = 0;
@@ -99,6 +102,7 @@ public class MEStatus extends com.kiss.core.Object {
         this.id = acclList.get(currentId);
         this.before = beforeTmp;
         this.after = afterTmp;
+        this.azimuth = azimuth;
     }
 
     @Override
