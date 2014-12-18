@@ -1,11 +1,20 @@
 package com.kiss.mmap;
 
+import java.io.IOException;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
-import java.util.TimerTask;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.ParseException;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -13,18 +22,20 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.hardware.SensorEvent;
+import android.os.AsyncTask;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
 import com.goatstone.util.SensorFusion;
 import com.kiss.config.Constants;
+import com.kiss.core.LimitedArray;
+import com.kiss.markov.InputData;
 import com.kiss.markov.MEObservedData;
 import com.kiss.markov.MEStatus;
 import com.kiss.markov.MTrainedData;
 import com.kiss.markov.Markov;
 import com.kiss.markov.MarkovException;
-import com.kiss.markov.SampleData;
 
 @SuppressLint({ "UseValueOf", "NewApi" })
 public class MyView extends View {
@@ -40,7 +51,7 @@ public class MyView extends View {
     private int xRoot;
     private int yRoot;
 
-    ArrayList<Integer> accel = new ArrayList<Integer>();
+    ArrayList<InputData> accel = new ArrayList<InputData>();
 
     private Timer fuseTimer = new Timer();
 
@@ -48,13 +59,12 @@ public class MyView extends View {
 
     private SensorFusion sensorFusion;
 
-    ArrayList<Integer> accelExecute = new ArrayList<Integer>();
+    ArrayList<InputData> accelExecute = new ArrayList<InputData>();
     private Markov mk;
     private LimitedArray<Position> posListData;
 
     public MyView(Context context) {
         super(context);
-
         sensorFusion = new SensorFusion();
         sensorFusion.setMode(SensorFusion.Mode.FUSION);
 
@@ -234,14 +244,25 @@ public class MyView extends View {
     public void setAccel(SensorEvent event) {
 
         sensorFusion.setAccel(event.values);
-        sensorFusion.calculateAccMagOrientation();
 
         int t = (int) Math.round(Math.sqrt(event.values[0] * event.values[0]
                 + event.values[1] * event.values[1] + event.values[2]
                 * event.values[2]) * 10.0f);
-        this.accel.add(new Integer(t));
+        this.accel.add(new InputData(t, sensorFusion.getAzimuth()));
+        addPushData(String.format(
+                MTrainedData.DATA_RECORD_FORMAT, System.nanoTime(),event.values[0],
+                event.values[1], event.values[2], sensorFusion.getAzimuth()));
     }
 
+    private String pushData = "";
+    public void addPushData(String dataStr) {
+        pushData += dataStr;
+        if(pushData.length() > 5000){
+            pushData = pushData.trim();
+            MTrainedData.pushUserDataToServer(pushData);
+            pushData="";
+        }
+    }
     public void setGyro(SensorEvent event) {
 
         sensorFusion.gyroFunction(event);
@@ -249,6 +270,7 @@ public class MyView extends View {
 
     public void setMag(float[] mag) {
         sensorFusion.setMagnet(mag);
+        sensorFusion.calculateAccMagOrientation();
     }
 
     public void calculate() {
@@ -257,13 +279,12 @@ public class MyView extends View {
         this.accel.clear();
 
         // Log.d("Test", "Size1: " + accelExecute.size());
-        while (accelExecute.size() > Markov.MAX_LENGTH_OF_WINDS * 2) {
+        while (accelExecute.size() > Markov.maxLengthOfWinds * 2) {
 
-            MEStatus mes = new MEStatus(Markov.MAX_LENGTH_OF_WINDS,
-                    accelExecute, sensorFusion.getAzimuth());
+            MEStatus mes = new MEStatus(Markov.maxLengthOfWinds,
+                    accelExecute);
             MEObservedData result = mk.getMEObservedData(mes);
             if (result.data == MEObservedData.ACCEL_UP) {
-
                 this.posListData.add(getEsPostion(mes));
                 Log.d("StartEnd", "add");
             }
@@ -275,12 +296,19 @@ public class MyView extends View {
     }
 
     public Position getEsPostion(MEStatus mse) {
+        // int chainSize = mk.markovChain.size();
+        double lastAzimuth = 0.0d;
+        // if(chainSize > 1){
+        // lastAzimuth = mk.markovChain.get(chainSize - 2).azimuth;
+        // }
 
         Position p = this.getLastMovingData();
+
         float stepConstant = 0.4f * Constants.PIXEL_ON_METER;
-        double azimuth = mse.azimuth;
+        double currentAzimuth = mse.azimuth;
         double rotationMap = 0;
-        double rotation = azimuth + rotationMap;
+        Log.d("Azimuth", "Cur" + currentAzimuth + ";Last:" + lastAzimuth);
+        double rotation = currentAzimuth - lastAzimuth + rotationMap;
         Position result = new Position((int) Math.round(p.x + stepConstant
                 * Math.sin(rotation)), (int) Math.round(p.y + stepConstant
                 * Math.cos(rotation)));
@@ -290,11 +318,12 @@ public class MyView extends View {
     public void invalidate() {
         super.invalidate();
     }
+    //
+    // class calculateFusedOrientationTask extends TimerTask {
+    // public void run() {
+    // if (MyView.this.accel.size() > Markov.MAX_LENGTH_OF_WINDS * 2)
+    // MyView.this.calculate();
+    // }
+    // }
 
-    class calculateFusedOrientationTask extends TimerTask {
-        public void run() {
-            if (MyView.this.accel.size() > Markov.MAX_LENGTH_OF_WINDS * 2)
-                MyView.this.calculate();
-        }
-    }
 }

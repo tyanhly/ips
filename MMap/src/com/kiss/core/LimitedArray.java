@@ -1,4 +1,4 @@
-package com.kiss.mmap;
+package com.kiss.core;
 
 import java.util.ArrayList;
 

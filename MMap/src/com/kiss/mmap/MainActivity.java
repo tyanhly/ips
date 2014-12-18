@@ -41,7 +41,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 
                 myView.calculate();
                 myView.invalidate();
-                handler.postDelayed(this, 100);              
+                handler.postDelayed(this, 100);
             }
         };
         handler.postDelayed(r, 100);
