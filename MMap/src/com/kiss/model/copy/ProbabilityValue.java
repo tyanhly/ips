@@ -1,4 +1,4 @@
-package com.kiss.model;
+package com.kiss.model.copy;
 
 public class ProbabilityValue  {
 

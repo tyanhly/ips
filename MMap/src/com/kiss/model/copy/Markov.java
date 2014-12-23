@@ -1,4 +1,4 @@
-package com.kiss.model;
+package com.kiss.model.copy;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,11 +15,11 @@ public class Markov {
     public static int maxLengthOfWinds = MTrainedData.maxLengthOfWinds;
     public static int maxLengthOfChain = 5;
     public static float kmeanADownEpsilon = 40f;
-    public static float kmeanAUpEpsilon = 30f;
+    public static float kmeanAUpEpsilon = 20f;
     public static float kmeanAOtherEpsilon = 40f;
     public static float kmeanBeforAfterMaxEpsilon = 5f;
-    public static float kmeanBeforAfterMidEpsilon = 2f;
-    public static float kmeanBeforAfterMinEpsilon = 2f;
+    public static float kmeanBeforAfterMidEpsilon = 3f;
+    public static float kmeanBeforAfterMinEpsilon = 5f;
     public float kmeanGroupAUp = 108f;
     public float kmeanGroupADown = 88f;
     public float kmeanGroupAOther = 98f;
@@ -185,16 +185,17 @@ public class Markov {
         float before = Math.abs(mes.before - groupBefore);
 
         if (before > this.kmeanBeforAfterMidEpsilon) {
-
-            before = 0;
-
+            if (mes.before > groupBefore) {
+                before = 1;
+            } else {
+                before = 0;
+            }
         } else {
             before = before / this.kmeanBeforAfterMidEpsilon;
         }
         // @todo a
         float after = Math.abs(mes.after - groupAfter);
         if (after > this.kmeanBeforAfterMaxEpsilon) {
-            after = 1;
             after = 0;
         } else {
             after = after / this.kmeanBeforAfterMaxEpsilon;

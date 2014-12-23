@@ -37,7 +37,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         final Handler handler=new Handler();
         Runnable r=new Runnable() {
             public void run() {
-                Log.d("run","run");
+                Log.d("StartEnd1","run");
                 myView.calculate();
                 myView.invalidate();
                 handler.postDelayed(this, 200);

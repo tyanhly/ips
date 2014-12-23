@@ -21,7 +21,6 @@ import com.kiss.core.LimitedArray;
 import com.kiss.model.MEObservedData;
 import com.kiss.model.MEStatus;
 import com.kiss.model.MTrainedData;
-import com.kiss.model.Markov;
 
 @SuppressLint({ "UseValueOf", "NewApi" })
 public class MyView extends View {
@@ -45,7 +44,7 @@ public class MyView extends View {
 
     private SensorFusion sensorFusion;
 
-    ArrayList<MEStatus> accelExecute = new ArrayList<MEStatus>();
+    
     private MTrainedData mtrainedData;
     private LimitedArray<Position> posListData;
     private boolean checkPushDataToServer =false;
@@ -247,7 +246,7 @@ public class MyView extends View {
         int a = (int) Math.round(Math.sqrt(event.values[0] * event.values[0]
                 + event.values[1] * event.values[1] + event.values[2]
                 * event.values[2]) * 10.0f);
-        this.accel.add(new MEStatus(a, sensorFusion.getAzimuth(), System.nanoTime()));
+        this.accel.add(new MEStatus(a, System.nanoTime(),sensorFusion.getAzimuth()));
         addPushData(String.format(
                 MTrainedData.DATA_RECORD_FORMAT, System.nanoTime(),event.values[0],
                 event.values[1], event.values[2], sensorFusion.getAzimuth()));
@@ -273,34 +272,28 @@ public class MyView extends View {
     }
 
     public void calculate() {
+        ArrayList<MEStatus> accelExecute = new ArrayList<MEStatus>();
         accelExecute.addAll(accel);
-        Log.d("StartEnd", "Start" + accelExecute.size());
         this.accel.clear();
 
         // Log.d("Test", "Size1: " + accelExecute.size());
-        while (accelExecute.size() > Markov.maxLengthOfWinds * 2) {
-
-            MEStatus mes = new MEStatus(Markov.maxLengthOfWinds,
-                    accelExecute);
+        for(int i=0; i< accelExecute.size();i++){
+            
+            MEStatus mes = accelExecute.get(i);
             MEObservedData result = mtrainedData.getMEObservedData(mes);
             Log.d("Result", "Result:" + result);
             if (result != null && result.data == MEObservedData.ACCEL_UP) {
                 this.posListData.add(getEsPostion(mes));
-                Log.d("StartEnd", "add");
             }
-            accelExecute.remove(0);
         }
+        accelExecute.clear();
         // Log.d("Test", "Size2: " + accelExecute.size());
 
         Log.d("StartEnd", "End" + accelExecute.size());
     }
 
     public Position getEsPostion(MEStatus mse) {
-        // int chainSize = mk.markovChain.size();
         double lastAzimuth = 0.0d;
-        // if(chainSize > 1){
-        // lastAzimuth = mk.markovChain.get(chainSize - 2).azimuth;
-        // }
 
         Position p = this.getLastMovingData();
 

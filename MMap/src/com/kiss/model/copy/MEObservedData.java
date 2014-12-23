@@ -1,19 +1,19 @@
-package com.kiss.model;
+package com.kiss.model.copy;
 
 
 public class MEObservedData extends com.kiss.core.Object{
 
-    public static final int ACCEL_UP=1;
-    public static final int ACCEL_DOWN=2;
-    public static final int ACCEL_OTHER=3;
+    public static int ACCEL_UP=1;
+    public static int ACCEL_DOWN=2;
+    public static int ACCEL_OTHER=3;
     
     
     public int data;
-    public MEObservedData(int data) throws KissModelException{
+    public MEObservedData(int data) throws MarkovException{
         if(data == ACCEL_UP || data == ACCEL_DOWN || data == ACCEL_OTHER){
             this.data = data;
         }else{
-            throw new KissModelException(KissModelException.msgs.get(KissModelException.MARKOV_DATA_NOT_IN_RANGE));
+            throw new MarkovException(MarkovException.msgs.get(MarkovException.MARKOV_DATA_NOT_IN_RANGE));
         }
     }
     

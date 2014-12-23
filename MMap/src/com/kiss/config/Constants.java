@@ -10,9 +10,9 @@ public class Constants {
     public static final String LAST_POSITION_STRING_KEY = "LastPositionKey";
     public static final String LAST_RPOSITION_STRING_KEY = "LastRPositionKey";
 
-    public static final int THREAD_UPDATE_STEP_MLS = 30;
+    public static final int THREAD_UPDATE_STEP_MLS = 50;
     public static final int PIXEL_ON_METER = 100;
-    public static final int POS_SAMPLE_TOTAL = 50;
+    public static final int POS_SAMPLE_TOTAL = 20;
     public static final int MOVING_SAMPLE_TOTAL = 10;
     public static final float EPSILON = 0.000000001f;
     public static final float NS2S = 1.0f / 1000000000.0f;
