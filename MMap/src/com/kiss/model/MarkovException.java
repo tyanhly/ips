@@ -1,4 +1,4 @@
-package com.kiss.markov;
+package com.kiss.model;
 
 import java.util.HashMap;
 import java.util.Map;

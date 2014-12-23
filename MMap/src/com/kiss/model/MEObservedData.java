@@ -1,4 +1,4 @@
-package com.kiss.markov;
+package com.kiss.model;
 
 
 public class MEObservedData extends com.kiss.core.Object{
@@ -6,6 +6,7 @@ public class MEObservedData extends com.kiss.core.Object{
     public static int ACCEL_UP=1;
     public static int ACCEL_DOWN=2;
     public static int ACCEL_OTHER=3;
+    
     
     public int data;
     public MEObservedData(int data) throws MarkovException{

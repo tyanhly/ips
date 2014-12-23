@@ -38,13 +38,12 @@ public class MainActivity extends Activity implements SensorEventListener {
         Runnable r=new Runnable() {
             public void run() {
                 Log.d("run","run");
-
                 myView.calculate();
                 myView.invalidate();
-                handler.postDelayed(this, 100);
+                handler.postDelayed(this, 200);
             }
         };
-        handler.postDelayed(r, 100);
+        handler.postDelayed(r, 2000);
     }
 
     public void registerSensorManagerListeners() {

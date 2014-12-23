@@ -1,4 +1,4 @@
-package com.kiss.markov;
+package com.kiss.model;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,11 +16,11 @@ public class SampleData {
     public Map<MEStatus, Map<MEStatus, Float>> transitionProbability = new HashMap<MEStatus, Map<MEStatus, Float>>();
     public Map<MEStatus, Map<MEObservedData, Float>> emissionProbability = new HashMap<MEStatus, Map<MEObservedData, Float>>();
 
-    public SampleData() throws MarkovException {
+    public SampleData() {
         _init();
     }
 
-    private void _init() throws MarkovException {
+    private void _init() {
         int arrIntData[] = { 98, 98, 98, 97, 95, 94, 94, 94, 93, 93, 94, 95,
                 95, 97, 99, 101, 103, 104, 103, 102, 102, 101, 105, 106, 107,
                 107, 105, 102, 99, 98, 100, 103, 103, 98, 95, 95, 94, 93, 93,
@@ -193,7 +193,7 @@ public class SampleData {
                 88, 91, 98, 106, 112, 111, 100, 90, 88, 87, 85, 83, 84, 88, 91,
                 93, 94, 94, 93, 92, 91, 92, 94, 98, 100, 100, 103, 104, 106,
                 112, 120, 129, 135, 130, 116, 99, 90, 87, 86, 88, 93, 99, 102,
-                105, 103, 98, 92, 87, 84, 84, 87, 91, 95, 97, 102, 102};
+                105, 103, 98, 92, 87, 84, 84, 87, 91, 95, 97, 102, 102 };
         setStatusSet(arrIntData);
         setObservedDataSet();
         setStatusProbability(arrIntData);
@@ -204,32 +204,37 @@ public class SampleData {
     private void setStatusSet(int arrIntData[]) {
 
         for (int i = 0; i < arrIntData.length; i++) {
-            statusSet.add(new MEStatus(i, arrIntData,0.0d));
+            statusSet.add(new MEStatus(i, arrIntData, 0.0d));
         }
     }
 
-    private void setObservedDataSet() throws MarkovException {
-        observedDataSet.add(new MEObservedData(MEObservedData.ACCEL_DOWN));
-        observedDataSet.add(new MEObservedData(MEObservedData.ACCEL_UP));
-        observedDataSet.add(new MEObservedData(MEObservedData.ACCEL_OTHER));
+    private void setObservedDataSet() {
+        try {
+
+            observedDataSet.add(new MEObservedData(MEObservedData.ACCEL_DOWN));
+            observedDataSet.add(new MEObservedData(MEObservedData.ACCEL_UP));
+            observedDataSet.add(new MEObservedData(MEObservedData.ACCEL_OTHER));
+        } catch (MarkovException e) {
+            // TODO: handle exception
+        }
     }
 
     private void setStatusProbability(int arrIntData[]) {
-        MEStatus tmpStatus = new MEStatus(0, arrIntData,0.0d);
+        MEStatus tmpStatus = new MEStatus(0, arrIntData, 0.0d);
         Float initValue = new Float(0.0f);
         for (MEStatus es : statusSet) {
 
             this.statusProbability.put(es, initValue);
         }
         for (int i = 1; i < arrIntData.length - 1; i++) {
-            MEStatus tmpStatus1 = new MEStatus(i, arrIntData,0.0d);
+            MEStatus tmpStatus1 = new MEStatus(i, arrIntData, 0.0d);
             if (tmpStatus.equals(tmpStatus1)) {
                 this.statusProbability
                         .put(tmpStatus,
                                 new Float(this.statusProbability.get(tmpStatus)
                                         .floatValue() + 1));
             }
-            tmpStatus = new MEStatus(i, arrIntData,0.0d);
+            tmpStatus = new MEStatus(i, arrIntData, 0.0d);
         }
         for (MEStatus es : statusSet) {
             this.statusProbability.put(es,
@@ -245,9 +250,9 @@ public class SampleData {
             this.transitionProbability.put(es, initValue);
         }
 
-        MEStatus currentStatus = new MEStatus(0, arrIntData,0.0d);
+        MEStatus currentStatus = new MEStatus(0, arrIntData, 0.0d);
         for (int i = 1; i < arrIntData.length - 1; i++) {
-            MEStatus tmpStatus = new MEStatus(i, arrIntData,0.0d);
+            MEStatus tmpStatus = new MEStatus(i, arrIntData, 0.0d);
             Map<MEStatus, Float> currentValue = this.transitionProbability
                     .get(currentStatus);
             if (currentValue.containsKey(tmpStatus)) {
@@ -271,35 +276,46 @@ public class SampleData {
         }
     }
 
-    private void setEmissionProbability(int arrIntData[])
-            throws MarkovException {
+    private void setEmissionProbability(int arrIntData[]) {
 
         Map<MEObservedData, Float> initValue = new HashMap<MEObservedData, Float>();
-        initValue.put(new MEObservedData(MEObservedData.ACCEL_UP), new Float(
-                0.0f));
-        initValue.put(new MEObservedData(MEObservedData.ACCEL_DOWN), new Float(
-                0.0f));
-        initValue.put(new MEObservedData(MEObservedData.ACCEL_OTHER),
-                new Float(0.0f));
+        try {
+            initValue.put(new MEObservedData(MEObservedData.ACCEL_UP),
+                    new Float(0.0f));
+            initValue.put(new MEObservedData(MEObservedData.ACCEL_DOWN),
+                    new Float(0.0f));
+            initValue.put(new MEObservedData(MEObservedData.ACCEL_OTHER),
+                    new Float(0.0f));
+        } catch (MarkovException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 
         for (MEStatus es : statusSet) {
             this.emissionProbability.put(es, initValue);
         }
 
         for (int i = 0; i < arrIntData.length - 1; i++) {
-            MEStatus currentStatus = new MEStatus(i, arrIntData,0.0d);
+            MEStatus currentStatus = new MEStatus(i, arrIntData, 0.0d);
             this.emissionProbability.put(currentStatus,
                     getEstimateResult(currentStatus));
         }
     }
 
-    public Map<MEObservedData, Float> getEstimateResult(MEStatus mes)
-            throws MarkovException {
+    public Map<MEObservedData, Float> getEstimateResult(MEStatus mes) {
         int MAX_LENGTH_OF_WINDS = 10;
         Map<MEObservedData, Float> result = new HashMap<MEObservedData, Float>();
-        MEObservedData up = new MEObservedData(MEObservedData.ACCEL_UP);
-        MEObservedData down = new MEObservedData(MEObservedData.ACCEL_DOWN);
-        MEObservedData other = new MEObservedData(MEObservedData.ACCEL_OTHER);
+        MEObservedData down = null;
+        MEObservedData other = null;
+        MEObservedData up = null;
+        try {
+            up = new MEObservedData(MEObservedData.ACCEL_UP);
+            down = new MEObservedData(MEObservedData.ACCEL_DOWN);
+            other = new MEObservedData(MEObservedData.ACCEL_OTHER);
+        } catch (MarkovException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         result.put(up, new Float(0.0f));
         result.put(down, new Float(0.0f));
         result.put(other, new Float(1.0f));
@@ -309,9 +325,10 @@ public class SampleData {
             // it is top
             if (mes.before > 0) {
                 // it is up
-                if (mes.id > 105) {
+                if (mes.a > 105) {
                     float rateUp = 0.0f, rateOther = 0.0f;
-                    if (mes.before + mes.after > 15 && mes.before > 1 && mes.after>1) {
+                    if (mes.before + mes.after > 15 && mes.before > 1
+                            && mes.after > 1) {
                         Log.d("OutputData", "4");
                         rateUp = 1.0f;
                         rateOther = 0.0f;
@@ -326,7 +343,7 @@ public class SampleData {
             // it is bot
             else {
                 // it is down
-                if (mes.id < 90) {
+                if (mes.a < 90) {
                     float rateDown = (mes.before + mes.after)
                             / MAX_LENGTH_OF_WINDS / 2;
                     float rateOther = 1 - rateDown;

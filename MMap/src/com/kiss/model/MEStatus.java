@@ -1,9 +1,9 @@
-package com.kiss.markov;
+package com.kiss.model;
 
 import java.util.List;
 
 public class MEStatus extends com.kiss.core.Object {
-    public int id;
+    public int a;
     public int before = 0;
     public int after = 0;
     public double azimuth = 0;
@@ -13,13 +13,13 @@ public class MEStatus extends com.kiss.core.Object {
     public static final int EPSILON_AFTER = 2;
 
     public MEStatus(int id, double azimuth, long time) {
-        this.id = id;
+        this.a = id;
         this.azimuth = azimuth;
         this.time = time;
     }
 
     public MEStatus(int id, int before, int after, double azimuth) {
-        this.id = id;
+        this.a = id;
         this.before = before;
         this.after = after;
         this.azimuth = azimuth;
@@ -48,13 +48,13 @@ public class MEStatus extends com.kiss.core.Object {
                 afterTmp--;
             }
         }
-        this.id = arrIntData[currentId];
+        this.a = arrIntData[currentId];
         this.before = beforeTmp;
         this.after = afterTmp;
         this.azimuth = azimuth;
     }
 
-    public MEStatus(int currentId, List<InputData> acclList) {
+    public MEStatus(int currentId, List<MEStatus> acclList) {
         int length = acclList.size();
         int beforeTmp = 0;
         int afterTmp = 0;
@@ -106,7 +106,7 @@ public class MEStatus extends com.kiss.core.Object {
                 case4 = false;
             }
         }
-        this.id = acclList.get(currentId).a;
+        this.a = acclList.get(currentId).a;
         this.before = beforeTmp;
         this.after = afterTmp;
         this.azimuth = acclList.get(currentId).azimuth * -1 + 90;
@@ -115,7 +115,7 @@ public class MEStatus extends com.kiss.core.Object {
     @Override
     public boolean equals(Object o) {
         MEStatus obj = (MEStatus) o;
-        if (this.id == obj.id
+        if (this.a == obj.a
                 && ((before - obj.before) * (before - obj.before) < EPSILON_BEFORE)
                 && ((this.after - obj.after) * (this.after - obj.after) < EPSILON_AFTER)) {
             
@@ -126,6 +126,6 @@ public class MEStatus extends com.kiss.core.Object {
 
     @Override
     public int hashCode() {
-        return id * 1000 + before * 10 + after;
+        return a * 1000 + before * 10 + after;
     }
 }

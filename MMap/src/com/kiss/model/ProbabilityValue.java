@@ -1,4 +1,4 @@
-package com.kiss.markov;
+package com.kiss.model;
 
 public class ProbabilityValue  {
 

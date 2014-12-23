@@ -1,20 +1,9 @@
 package com.kiss.mmap;
 
-import java.io.IOException;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Timer;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.ParseException;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -22,7 +11,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.hardware.SensorEvent;
-import android.os.AsyncTask;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -30,12 +18,10 @@ import android.view.View;
 import com.goatstone.util.SensorFusion;
 import com.kiss.config.Constants;
 import com.kiss.core.LimitedArray;
-import com.kiss.markov.InputData;
-import com.kiss.markov.MEObservedData;
-import com.kiss.markov.MEStatus;
-import com.kiss.markov.MTrainedData;
-import com.kiss.markov.Markov;
-import com.kiss.markov.MarkovException;
+import com.kiss.model.MEObservedData;
+import com.kiss.model.MEStatus;
+import com.kiss.model.MTrainedData;
+import com.kiss.model.Markov;
 
 @SuppressLint({ "UseValueOf", "NewApi" })
 public class MyView extends View {
@@ -51,7 +37,7 @@ public class MyView extends View {
     private int xRoot;
     private int yRoot;
 
-    ArrayList<InputData> accel = new ArrayList<InputData>();
+    ArrayList<MEStatus> accel = new ArrayList<MEStatus>();
 
     private Timer fuseTimer = new Timer();
 
@@ -59,21 +45,17 @@ public class MyView extends View {
 
     private SensorFusion sensorFusion;
 
-    ArrayList<InputData> accelExecute = new ArrayList<InputData>();
-    private Markov mk;
+    ArrayList<MEStatus> accelExecute = new ArrayList<MEStatus>();
+    private MTrainedData mtrainedData;
     private LimitedArray<Position> posListData;
+    private boolean checkPushDataToServer =false;
 
     public MyView(Context context) {
         super(context);
         sensorFusion = new SensorFusion();
         sensorFusion.setMode(SensorFusion.Mode.FUSION);
 
-        try {
-            mk = new Markov();
-        } catch (MarkovException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        mtrainedData = new MTrainedData();
         _viewInit();
         _sensorsInit();
 
@@ -132,6 +114,11 @@ public class MyView extends View {
 
         canvas.drawText(String.format("Pos: %d", posListData.size()),
                 screenWidth - 330, screenHeight - 30, txtPaint);
+        
+        canvas.drawText(String.format("ResetPoints"), (int) 10, screenHeight/4, txtPaint);
+        canvas.drawText(String.format("PushDataToServer"), (int) (2*screenWidth/4+10), screenHeight/4, txtPaint);
+        canvas.drawText(String.format("PullDataFromServer"), (int) (2*screenWidth/4+10), 3*screenHeight/4, txtPaint);
+        
     }
 
     protected void _drawPos(Canvas canvas, Position p, int redColor) {
@@ -213,18 +200,30 @@ public class MyView extends View {
         // e.printStackTrace();
         // }
     }
+    
+    
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
-
-        printSampleTestData();
         final int action = ev.getAction();
-        switch (action & MotionEvent.ACTION_MASK) {
-        case MotionEvent.ACTION_DOWN: {
-            posListData.clear();
-            invalidate();
+        if(ev.getX() < screenWidth/2 && ev.getY() <screenHeight/2){
+
+            switch (action & MotionEvent.ACTION_MASK) {
+            case MotionEvent.ACTION_DOWN: {
+                posListData.clear();
+                invalidate();
+            }
+            }
         }
+        if(ev.getX() > screenWidth/2 && ev.getY() <screenHeight/2){
+            checkPushDataToServer = true;
+        }else{
+            checkPushDataToServer = false;
+        }
+        if(ev.getX() > screenWidth/2 && ev.getY() > screenHeight/2){
+    //        printSampleTestData();
+            mtrainedData.setMkUserAgain();
         }
 
         return super.onTouchEvent(ev);
@@ -245,10 +244,10 @@ public class MyView extends View {
 
         sensorFusion.setAccel(event.values);
 
-        int t = (int) Math.round(Math.sqrt(event.values[0] * event.values[0]
+        int a = (int) Math.round(Math.sqrt(event.values[0] * event.values[0]
                 + event.values[1] * event.values[1] + event.values[2]
                 * event.values[2]) * 10.0f);
-        this.accel.add(new InputData(t, sensorFusion.getAzimuth()));
+        this.accel.add(new MEStatus(a, sensorFusion.getAzimuth(), System.nanoTime()));
         addPushData(String.format(
                 MTrainedData.DATA_RECORD_FORMAT, System.nanoTime(),event.values[0],
                 event.values[1], event.values[2], sensorFusion.getAzimuth()));
@@ -257,7 +256,7 @@ public class MyView extends View {
     private String pushData = "";
     public void addPushData(String dataStr) {
         pushData += dataStr;
-        if(pushData.length() > 5000){
+        if(pushData.length() > 5000 && checkPushDataToServer){
             pushData = pushData.trim();
             MTrainedData.pushUserDataToServer(pushData);
             pushData="";
@@ -283,8 +282,9 @@ public class MyView extends View {
 
             MEStatus mes = new MEStatus(Markov.maxLengthOfWinds,
                     accelExecute);
-            MEObservedData result = mk.getMEObservedData(mes);
-            if (result.data == MEObservedData.ACCEL_UP) {
+            MEObservedData result = mtrainedData.getMEObservedData(mes);
+            Log.d("Result", "Result:" + result);
+            if (result != null && result.data == MEObservedData.ACCEL_UP) {
                 this.posListData.add(getEsPostion(mes));
                 Log.d("StartEnd", "add");
             }
