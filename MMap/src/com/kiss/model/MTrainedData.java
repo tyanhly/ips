@@ -14,8 +14,11 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
+
+import com.kiss.core.FileUtil;
 
 @SuppressLint("UseValueOf")
 public class MTrainedData {
@@ -23,10 +26,10 @@ public class MTrainedData {
     public static final String READ_USER_FILE_URL = "http://192.168.30.17/php/readapi.php?file=ips_sensors_user";
     public static final String WRITE_COMMON_FILE_URL = "http://192.168.30.17/php/writeapi.php?file=ips_sensors_common";
     public static final String WRITE_USER_FILE_URL = "http://192.168.30.17/php/writeapi.php?file=ips_sensors_user";
-    public static final String DATA_RECORD_FORMAT = "%d %.3f %.3f %.3f %.3f\n";
+    public static final String DATA_RECORD_FORMAT = "%d %.3f %.3f %.3f %.3f;";
     public static final String USER_CONST = "USER";
     public static final String COMMON_CONST = "COMMON";
-    public static int maxLengthOfWinds = 20;
+    public static int maxLengthOfWinds = 10;
 
     private Kmean kmean;
 
@@ -34,7 +37,10 @@ public class MTrainedData {
     public String apiCommonResponse = new String("");
     public String responseUsed = apiUserResponse;
 
-    public static void pushUserDataToServer(String data) {
+    private Context c;
+
+    public static void pushUserDataToServer(Context c, String data) {
+        FileUtil.appendFile(c, data, "abc");
         StaticHttpRequest task = new StaticHttpRequest();
         try {
             task.execute(new String[] {
@@ -52,14 +58,15 @@ public class MTrainedData {
     }
 
     private void _getApiResponse() {
-        HttpRequest task = new HttpRequest();
-        task.execute(new String[] { USER_CONST, READ_USER_FILE_URL });
-        // HttpRequest task1 = new HttpRequest();
-        // task1.execute(new String[] { "COMMON", READ_COMMON_FILE_URL });
+        GetData task = new GetData();
+        task.execute(new String[] {});
+
+        Log.d("StartEnd", "_getApiResponse");
     }
 
-    public MTrainedData() {
+    public MTrainedData(Context c) {
         // _getApiResponse();
+        this.c = c;
     }
 
     public void setMkUserAgain() {
@@ -78,7 +85,7 @@ public class MTrainedData {
         Log.d("TEST", "TrainningData");
         if (apiUserResponse != "") {
             List<MEStatus> inputDataList = new ArrayList<MEStatus>();
-            String[] records = apiUserResponse.trim().split("\n");
+            String[] records = apiUserResponse.trim().split(";");
             for (int i = 0; i < records.length; i++) {
                 String record = records[i];
                 String[] data = record.split(" ");
@@ -100,21 +107,11 @@ public class MTrainedData {
     private List<MEStatus> getSimplifyList(List<MEStatus> inputDataList) {
 
         for (int i = 0; i < inputDataList.size() - 1; i++) {
-            MEStatus mes = inputDataList.get(i);
-            int begin = (i > this.maxLengthOfWinds)?(i-this.maxLengthOfWinds): 0;
-            int end  = (i < inputDataList.size() - this.maxLengthOfWinds)?(i+this.maxLengthOfWinds): inputDataList.size();
-            int count = 0;
-            for(int j=begin; j<end;j++){
-                if(mes.a>inputDataList.get(j).a){
-                    count++;
-                }
-            }
-            mes.less = count;
-            inputDataList.set(i, mes   );
+            MEStatus mes = new MEStatus(i, inputDataList);
+            inputDataList.set(i, mes);
         }
         return inputDataList;
     }
-
 
     public static MEStatus createMEStatus(float a1, float a2, float a3,
             long time, float azimuth) {
@@ -122,40 +119,12 @@ public class MTrainedData {
         return new MEStatus(a, time, azimuth);
     }
 
-    class HttpRequest extends AsyncTask<String, Void, Boolean> {
+    class GetData extends AsyncTask<String, Void, Boolean> {
         String responseConst = "OTHER";
 
         protected Boolean doInBackground(String... params) {
-            if (params[0] == USER_CONST) {
-                responseUsed = apiUserResponse;
-            }
-            if (params[0] == COMMON_CONST) {
-                responseUsed = apiCommonResponse;
-            }
 
-            try {
-                String url = params[1];
-                DefaultHttpClient httpClient = new DefaultHttpClient();
-                HttpGet get = new HttpGet(url);
-
-                HttpResponse httpResponse = httpClient.execute(get);
-                HttpEntity httpEntity = httpResponse.getEntity();
-                if (params[0] == USER_CONST) {
-                    apiUserResponse = EntityUtils.toString(httpEntity);
-                }
-                if (params[0] == COMMON_CONST) {
-                    apiCommonResponse = EntityUtils.toString(httpEntity);
-                }
-
-            } catch (ParseException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-                return false;
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-                return false;
-            }
+            apiUserResponse = FileUtil.readFile(MTrainedData.this.c, "abc");
 
             return true;
         }

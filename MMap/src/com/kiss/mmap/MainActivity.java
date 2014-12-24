@@ -1,6 +1,7 @@
 package com.kiss.mmap;
 
 import com.goatstone.util.SensorFusion;
+import com.kiss.core.FileUtil;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -40,7 +41,7 @@ public class MainActivity extends Activity implements SensorEventListener {
                 Log.d("StartEnd1","run");
                 myView.calculate();
                 myView.invalidate();
-                handler.postDelayed(this, 200);
+                handler.postDelayed(this, 400);
             }
         };
         handler.postDelayed(r, 2000);

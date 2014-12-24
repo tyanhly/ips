@@ -17,6 +17,7 @@ import android.view.View;
 
 import com.goatstone.util.SensorFusion;
 import com.kiss.config.Constants;
+import com.kiss.core.FileUtil;
 import com.kiss.core.LimitedArray;
 import com.kiss.model.MEObservedData;
 import com.kiss.model.MEStatus;
@@ -38,23 +39,20 @@ public class MyView extends View {
 
     ArrayList<MEStatus> accel = new ArrayList<MEStatus>();
 
-    private Timer fuseTimer = new Timer();
-
     DecimalFormat d = new DecimalFormat("#.##");
 
     private SensorFusion sensorFusion;
 
-    
     private MTrainedData mtrainedData;
     private LimitedArray<Position> posListData;
-    private boolean checkPushDataToServer =false;
+    private boolean checkPushDataToServer = false;
 
     public MyView(Context context) {
         super(context);
         sensorFusion = new SensorFusion();
         sensorFusion.setMode(SensorFusion.Mode.FUSION);
 
-        mtrainedData = new MTrainedData();
+        mtrainedData = new MTrainedData(this.getContext());
         _viewInit();
         _sensorsInit();
 
@@ -113,11 +111,17 @@ public class MyView extends View {
 
         canvas.drawText(String.format("Pos: %d", posListData.size()),
                 screenWidth - 330, screenHeight - 30, txtPaint);
-        
-        canvas.drawText(String.format("ResetPoints"), (int) 10, screenHeight/4, txtPaint);
-        canvas.drawText(String.format("PushDataToServer"), (int) (2*screenWidth/4+10), screenHeight/4, txtPaint);
-        canvas.drawText(String.format("PullDataFromServer"), (int) (2*screenWidth/4+10), 3*screenHeight/4, txtPaint);
-        
+
+        canvas.drawText(String.format("ResetPoints"), (int) 10,
+                screenHeight / 4, txtPaint);
+        canvas.drawText(String.format("PushDataToFile"),
+                (int) (2 * screenWidth / 4 + 10), screenHeight / 4, txtPaint);
+        canvas.drawText(String.format("ResetData"), (int) 10,
+                3 * screenHeight / 4, txtPaint);
+        canvas.drawText(String.format("PullDataFromFile"),
+                (int) (2 * screenWidth / 4 + 10), 3 * screenHeight / 4,
+                txtPaint);
+
     }
 
     protected void _drawPos(Canvas canvas, Position p, int redColor) {
@@ -130,7 +134,7 @@ public class MyView extends View {
     protected void _drawPositions(Canvas canvas) {
 
         for (int d = 0, i = 0; i < posListData.size(); i++, d++) {
-            int redColor = Color.rgb(d % 256, d / 256, d / 256);
+            int redColor = Color.rgb((d + 100) % 256, d / 256, d / 256);
             _drawPos(canvas, posListData.get(i), redColor);
         }
     }
@@ -199,29 +203,27 @@ public class MyView extends View {
         // e.printStackTrace();
         // }
     }
-    
-    
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
-        final int action = ev.getAction();
-        if(ev.getX() < screenWidth/2 && ev.getY() <screenHeight/2){
-
-            switch (action & MotionEvent.ACTION_MASK) {
-            case MotionEvent.ACTION_DOWN: {
-                posListData.clear();
-                invalidate();
-            }
-            }
+        if (ev.getX() < screenWidth / 2 && ev.getY() < screenHeight / 2) {
+            Log.i("TEST", "Reset list pos");
+            posListData.clear();
+            invalidate();
         }
-        if(ev.getX() > screenWidth/2 && ev.getY() <screenHeight/2){
+        if (ev.getX() > screenWidth / 2 && ev.getY() < screenHeight / 2) {
             checkPushDataToServer = true;
-        }else{
+        } else {
             checkPushDataToServer = false;
         }
-        if(ev.getX() > screenWidth/2 && ev.getY() > screenHeight/2){
-    //        printSampleTestData();
+
+        if (ev.getX() < screenWidth / 2 && ev.getY() > screenHeight / 2) {
+            FileUtil.deleteFile(this.getContext(), "abc");
+        }
+
+        if (ev.getX() > screenWidth / 2 && ev.getY() > screenHeight / 2) {
+            // printSampleTestData();
             mtrainedData.setMkUserAgain();
         }
 
@@ -239,28 +241,6 @@ public class MyView extends View {
         return posListData.get(posListData.size() - 1);
     }
 
-    public void setAccel(SensorEvent event) {
-
-        sensorFusion.setAccel(event.values);
-
-        int a = (int) Math.round(Math.sqrt(event.values[0] * event.values[0]
-                + event.values[1] * event.values[1] + event.values[2]
-                * event.values[2]) * 10.0f);
-        this.accel.add(new MEStatus(a, System.nanoTime(),sensorFusion.getAzimuth()));
-        addPushData(String.format(
-                MTrainedData.DATA_RECORD_FORMAT, System.nanoTime(),event.values[0],
-                event.values[1], event.values[2], sensorFusion.getAzimuth()));
-    }
-
-    private String pushData = "";
-    public void addPushData(String dataStr) {
-        pushData += dataStr;
-        if(pushData.length() > 5000 && checkPushDataToServer){
-            pushData = pushData.trim();
-            MTrainedData.pushUserDataToServer(pushData);
-            pushData="";
-        }
-    }
     public void setGyro(SensorEvent event) {
 
         sensorFusion.gyroFunction(event);
@@ -271,22 +251,53 @@ public class MyView extends View {
         sensorFusion.calculateAccMagOrientation();
     }
 
+    public void setAccel(SensorEvent event) {
+
+        sensorFusion.setAccel(event.values);
+
+        int a = (int) Math.round(Math.sqrt(event.values[0] * event.values[0]
+                + event.values[1] * event.values[1] + event.values[2]
+                * event.values[2]) * 10.0f);
+        this.accel.add(new MEStatus(a, System.nanoTime(), sensorFusion
+                .getAzimuth()));
+        addPushData(String.format(MTrainedData.DATA_RECORD_FORMAT,
+                System.nanoTime(), event.values[0], event.values[1],
+                event.values[2], sensorFusion.getAzimuth()));
+    }
+
+    private String pushData = "";
+
+    public void addPushData(String dataStr) {
+        if (checkPushDataToServer) {
+            pushData += dataStr;
+            if (pushData.length() > 5000) {
+                pushData = pushData.trim();
+                MTrainedData.pushUserDataToServer(this.getContext(), pushData);
+                pushData = "";
+            }
+        }
+    }
+
+    ArrayList<MEStatus> accelExecute = new ArrayList<MEStatus>();
+
     public void calculate() {
-        ArrayList<MEStatus> accelExecute = new ArrayList<MEStatus>();
+
         accelExecute.addAll(accel);
+        Log.d("StartEnd", "Start" + accelExecute.size());
         this.accel.clear();
 
         // Log.d("Test", "Size1: " + accelExecute.size());
-        for(int i=0; i< accelExecute.size();i++){
-            
-            MEStatus mes = accelExecute.get(i);
+        while (accelExecute.size() > MTrainedData.maxLengthOfWinds) {
+
+            MEStatus mes = new MEStatus(MTrainedData.maxLengthOfWinds,
+                    accelExecute);
             MEObservedData result = mtrainedData.getMEObservedData(mes);
-            Log.d("Result", "Result:" + result);
             if (result != null && result.data == MEObservedData.ACCEL_UP) {
                 this.posListData.add(getEsPostion(mes));
+                Log.d("StartEnd", "add");
             }
+            accelExecute.remove(0);
         }
-        accelExecute.clear();
         // Log.d("Test", "Size2: " + accelExecute.size());
 
         Log.d("StartEnd", "End" + accelExecute.size());
@@ -297,7 +308,7 @@ public class MyView extends View {
 
         Position p = this.getLastMovingData();
 
-        float stepConstant = 0.4f * Constants.PIXEL_ON_METER;
+        float stepConstant = Constants.METER_ON_STEP * Constants.PIXEL_ON_METER;
         double currentAzimuth = mse.azimuth;
         double rotationMap = 0;
         Log.d("Azimuth", "Cur" + currentAzimuth + ";Last:" + lastAzimuth);
@@ -305,6 +316,8 @@ public class MyView extends View {
         Position result = new Position((int) Math.round(p.x + stepConstant
                 * Math.sin(rotation)), (int) Math.round(p.y + stepConstant
                 * Math.cos(rotation)));
+        // Position result = new Position(0, (int) Math.round(p.x +
+        // stepConstant));
         return result;
     }
 

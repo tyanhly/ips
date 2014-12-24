@@ -11,10 +11,11 @@ public class Constants {
     public static final String LAST_RPOSITION_STRING_KEY = "LastRPositionKey";
 
     public static final int THREAD_UPDATE_STEP_MLS = 50;
-    public static final int PIXEL_ON_METER = 100;
-    public static final int POS_SAMPLE_TOTAL = 20;
+    public static final int PIXEL_ON_METER = 20;
+    public static final int POS_SAMPLE_TOTAL = 200;
     public static final int MOVING_SAMPLE_TOTAL = 10;
     public static final float EPSILON = 0.000000001f;
     public static final float NS2S = 1.0f / 1000000000.0f;
     public static final float FILTER_COEFFICIENT = 0.70f; // complemtry filter
+    public static final float METER_ON_STEP = 0.6f;
 }
